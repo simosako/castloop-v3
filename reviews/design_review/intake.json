@@ -1,0 +1,306 @@
+{
+  "target": "/home/sim/project/castloop-v3/docs/designs/castloop-mvp.md",
+  "preset": "interactive",
+  "stage": 9,
+  "feature_range": [
+    1,
+    409
+  ],
+  "detailed_range": [
+    410,
+    759
+  ],
+  "local_context": [
+    "/home/sim/project/castloop-v3/concepts_brief.md",
+    "/home/sim/project/castloop-v3/toml_spec.md",
+    "/home/sim/project/castloop-v3/implementation_decisions.md"
+  ],
+  "external_sources": [
+    {
+      "url": "https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/",
+      "resolved_url": "https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/",
+      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/01.html",
+      "content_type": "text/html",
+      "bytes": 274314,
+      "sha256": "4de42fbc8062afabe5f6f95d73b422ed5c39fe72eef53b6ac9ca5cf520bac60a",
+      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/01.txt"
+    },
+    {
+      "url": "https://developers.cloudflare.com/durable-objects/api/alarms/",
+      "resolved_url": "https://developers.cloudflare.com/durable-objects/api/alarms/",
+      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/02.html",
+      "content_type": "text/html",
+      "bytes": 149365,
+      "sha256": "cdd7992017065264eef96085c09c73d05f761a616b8b54a54c2e9f89e7d8356d",
+      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/02.txt"
+    },
+    {
+      "url": "https://developers.cloudflare.com/workers/cache/purge/",
+      "resolved_url": "https://developers.cloudflare.com/workers/cache/purge/",
+      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/03.html",
+      "content_type": "text/html",
+      "bytes": 318773,
+      "sha256": "2fdf7f06e441ecb756d867e4375a740d049aff267c08737c15a91e5c4c6d3daa",
+      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/03.txt"
+    },
+    {
+      "url": "https://developers.cloudflare.com/cache/how-to/purge-cache/",
+      "resolved_url": "https://developers.cloudflare.com/cache/how-to/purge-cache/",
+      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/04.html",
+      "content_type": "text/html",
+      "bytes": 121933,
+      "sha256": "a07c3278676b280ffd621355c6aa925fb1a204d67285a45795c822d9251260e8",
+      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/04.txt"
+    },
+    {
+      "url": "https://developers.cloudflare.com/workers/observability/logs/workers-logs/",
+      "resolved_url": "https://developers.cloudflare.com/workers/observability/logs/workers-logs/",
+      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/05.html",
+      "content_type": "text/html",
+      "bytes": 231116,
+      "sha256": "b1aa9011a6432d18120cbe420862e940d1be21659660efb58ac7981941f38c32",
+      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/05.txt"
+    },
+    {
+      "url": "https://developers.cloudflare.com/durable-objects/observability/metrics-and-analytics/",
+      "resolved_url": "https://developers.cloudflare.com/durable-objects/observability/metrics-and-analytics/",
+      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/06.html",
+      "content_type": "text/html",
+      "bytes": 132458,
+      "sha256": "6e83275548a8ed37975c66d614ec8fb841a10e5b2f8226f5fe3d02132d9f50d6",
+      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/06.txt"
+    },
+    {
+      "url": "https://github.com/squirrelchat/smol-toml/blob/mistress/README.md",
+      "resolved_url": "https://github.com/squirrelchat/smol-toml/blob/mistress/README.md",
+      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/07.html",
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 467835,
+      "sha256": "14232fd3eb25e062df58ef3bef97332659cbd7b259245655da551a8094425f1e",
+      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/07.txt"
+    },
+    {
+      "url": "https://github.com/js-temporal/temporal-polyfill",
+      "resolved_url": "https://github.com/js-temporal/temporal-polyfill",
+      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/08.html",
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 286074,
+      "sha256": "688f04e523d553414bd09a5a18527e9ca3cef0aae94c589feda59ea275c359d4",
+      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/08.txt"
+    },
+    {
+      "url": "https://github.com/inikulin/parse5",
+      "resolved_url": "https://github.com/inikulin/parse5",
+      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/09.html",
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 255060,
+      "sha256": "8cb0c1173117f761fba26d4a96e2912f0722895529b167961b4596561fa27698",
+      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/09.txt"
+    },
+    {
+      "url": "https://github.com/Borewit/music-metadata",
+      "resolved_url": "https://github.com/Borewit/music-metadata",
+      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/10.html",
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 687719,
+      "sha256": "d374d47199941e262a656dd9ccd0b2e9484aa0d480701d071cb4ed2883ad0f44",
+      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/10.txt"
+    },
+    {
+      "url": "https://github.com/mhart/aws4fetch",
+      "resolved_url": "https://github.com/mhart/aws4fetch",
+      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/11.html",
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 303761,
+      "sha256": "c3f028c0aefc3a05af480b1df1a1d13530d71dd4d68e3578a010351cdc6882c2",
+      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/11.txt"
+    },
+    {
+      "url": "https://bun.sh/docs/compiler/executables",
+      "resolved_url": "https://bun.sh/docs/compiler/executables",
+      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/12.html",
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 556448,
+      "sha256": "d2fca37dbff26dc7c5f253f713ee16b4e5a481ed301975d431b7bd74580ddae9",
+      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/12.txt"
+    },
+    {
+      "url": "https://developers.cloudflare.com/workers/testing/vitest-integration/",
+      "resolved_url": "https://developers.cloudflare.com/workers/testing/vitest-integration/",
+      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/13.html",
+      "content_type": "text/html",
+      "bytes": 179040,
+      "sha256": "964a6096924b9a0f8e08b9bba3c02dd0ccb78bb90920819873a9f957ad5f0577",
+      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/13.txt"
+    },
+    {
+      "url": "https://developers.cloudflare.com/workers/cache/configuration/",
+      "resolved_url": "https://developers.cloudflare.com/workers/cache/configuration/",
+      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/14.html",
+      "content_type": "text/html",
+      "bytes": 297200,
+      "sha256": "b0bf0807cda31a0a875ab491ee824e35aebdec256668bd8800c3aa707aadedd5",
+      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/14.txt"
+    },
+    {
+      "url": "https://podcasters.apple.com/support/837-change-the-rss-feed-url",
+      "resolved_url": "https://podcasters.apple.com/support/837-change-the-rss-feed-url",
+      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/15.html",
+      "content_type": "text/html",
+      "bytes": 20016,
+      "sha256": "9b01ce050eaadc435832aca200d74720363a11417667c7579b64014e707dfdcd",
+      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/15.txt"
+    }
+  ],
+  "failed": [],
+  "target_sha256": "a11971f1299a6020a1f1399362531329c04f93fd2046ee3f61ae444f2a4f5622",
+  "external_capture_utc": "2026-11-07T13:24:36.336641+00:00",
+  "review_status": "Concluded by author; design finalized on 2026-11-08; no post-edit re-audit or convergence",
+  "stage_5_findings": {
+    "blocker": 0,
+    "major": 0,
+    "nit": 1
+  },
+  "current_target_sha256": "63c6fc6d33e986eea44e1883d8bbdc77e262989ff8d31837924e917900e05289",
+  "stage_5_remediation": {
+    "ZO-1": "Author approved; applied to design; no runtime verification or re-audit"
+  },
+  "stage_6": {
+    "target_sha256": "d7686b8be903978ad5003e3150b73fd500fd25b35d93fe3bd657ce85bac5354d",
+    "reviewer": "design_comprehension",
+    "context": [],
+    "status": "complete",
+    "findings": {
+      "blocker": 0,
+      "major": 0,
+      "nit": 0
+    },
+    "report": "reviews/design_review/comprehension_report.md"
+  },
+  "stage_7": {
+    "round": 1,
+    "target_sha256": "d7686b8be903978ad5003e3150b73fd500fd25b35d93fe3bd657ce85bac5354d",
+    "status": "resolved",
+    "configuration": "Author confirmed three reviewers and standards",
+    "reviewers": [
+      "egm-design",
+      "egm-structural",
+      "egm-style"
+    ],
+    "reviewer_status": {
+      "egm-design": "completed",
+      "egm-structural": "completed",
+      "egm-style": "completed"
+    },
+    "raw_findings": {
+      "blocker": 0,
+      "major": 2,
+      "nit": 2
+    },
+    "consolidated_findings": {
+      "blocker": 0,
+      "major": 2,
+      "nit": 1
+    },
+    "dispositions": {
+      "design-1-1": "PROPOSE FIX",
+      "structural-1-1": "CONTEST",
+      "structural-1-2": "PROPOSE FIX (duplicate style-1-1)",
+      "style-1-1": "PROPOSE FIX"
+    },
+    "round_clean": false,
+    "converged": false,
+    "design_edits_applied": true,
+    "author_resolutions": {
+      "design-1-1": "accepted and applied with author-revised eligibility wording, not ordering",
+      "structural-1-1": "contest approved; attribution retained",
+      "structural-1-2": "accepted and applied",
+      "style-1-1": "duplicate accepted and applied"
+    },
+    "remaining_unaddressed": 0,
+    "accepted_fixes": 2,
+    "contested": 1,
+    "escalated": 0,
+    "declined": 0,
+    "post_edit_sha256": "d847e6af3f0dec10fc6ebbee90cbe78836ff9d6da5f87aecdc76c3b450fb7032",
+    "reaudit_run": false
+  },
+  "stage_8": {
+    "status": "complete",
+    "target_sha256": "d847e6af3f0dec10fc6ebbee90cbe78836ff9d6da5f87aecdc76c3b450fb7032",
+    "reviewer": "design_intermediate_zoom_out",
+    "focus": "Whole-design reassessment after comprehension and critic review; author approved proceeding without another critic round",
+    "findings": {
+      "blocker": 0,
+      "major": 0,
+      "nit": 0
+    },
+    "report": "reviews/design_review/intermediate_zoom_out_report.md",
+    "design_edits_applied": false
+  },
+  "stage_9": {
+    "round": 1,
+    "status": "resolved",
+    "target_sha256": "d847e6af3f0dec10fc6ebbee90cbe78836ff9d6da5f87aecdc76c3b450fb7032",
+    "configuration": "Author confirmed three reviewers and standards",
+    "reviewers": [
+      "egm-implementation-readiness",
+      "egm-codebase-details",
+      "egm-style"
+    ],
+    "reviewer_status": {
+      "egm-implementation-readiness": "completed",
+      "egm-codebase-details": "completed",
+      "egm-style": "completed"
+    },
+    "raw_findings": {
+      "blocker": 0,
+      "major": 7,
+      "nit": 2
+    },
+    "consolidated_findings": {
+      "blocker": 0,
+      "major": 5,
+      "nit": 2
+    },
+    "dispositions": {
+      "IR-1": "PROPOSE FIX",
+      "IR-2": "PROPOSE FIX",
+      "IR-3": "PROPOSE FIX",
+      "IR-4": "PROPOSE FIX",
+      "IR-5": "PROPOSE FIX",
+      "IR-6": "PROPOSE FIX",
+      "IR-7": "PROPOSE FIX"
+    },
+    "round_clean": false,
+    "converged": false,
+    "design_edits_applied": true,
+    "report": "reviews/design_review/implementation_readiness_report.md",
+    "resolution_report": "reviews/design_review/readiness/goldfish_review_report.md",
+    "proposal": "reviews/design_review/readiness_specification_proposal.md",
+    "accepted_fixes": 7,
+    "contested": 0,
+    "escalated": 0,
+    "declined": 0,
+    "remaining_unaddressed": 0,
+    "post_edit_sha256": "63c6fc6d33e986eea44e1883d8bbdc77e262989ff8d31837924e917900e05289",
+    "reaudit_run": false,
+    "author_resolutions": {
+      "IR-1": "accepted and applied",
+      "IR-2": "accepted and applied",
+      "IR-3": "accepted and applied with current/pending URL simplification; no migration MP3 copy",
+      "IR-4": "accepted and applied with replacement: strict Zod schemas plus smol-toml; no arbitrary unknown-value preservation",
+      "IR-5": "accepted and applied",
+      "IR-6": "accepted and applied",
+      "IR-7": "accepted and applied"
+    }
+  },
+  "final_checkpoint": {
+    "date": "2026-11-08",
+    "author_choice": "Conclude review and finalize document",
+    "status": "complete",
+    "remaining_unaddressed": 0,
+    "post_edit_reaudit": false,
+    "implementation_started": false
+  }
+}

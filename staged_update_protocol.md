@@ -1,5 +1,7 @@
 # Staged updates and repeatable publication
 
+**Authority:** [Approved design](./docs/designs/castloop-mvp.md#detailed-implementation-plan). The approved Detailed Implementation Plan, sections 3–5, defines concrete versioned operations/receipts, upload-first registration and authoritative SQLite acceptance. Any older R2-manifest or pre-upload proposal below is superseded history.
+
 * **Author:** Akira Shimosako
 * **Date:** 2026-11-07
 * **Status:** Accepted by the user: stage immutable R2 objects, then commit accepted object references in DO SQLite. The older R2-manifest proposal below is retained for comparison and is superseded by this section.
@@ -22,7 +24,7 @@ These are logical information groups, not a requirement for three tables or an o
 
 ### Update flow
 
-1. CLI performs syntax preflight and prepares changed immutable R2 objects with a saved operation ID, request fingerprint and expected accepted revision. Large files upload directly through S3. Prepared keys are unique and are not overwritten for a different request.
+1. CLI performs syntax and strict metadata-schema preflight and prepares changed immutable R2 objects with a saved operation ID, request fingerprint and expected accepted revision. Large files upload directly through S3. Prepared keys are unique and are not overwritten for a different request.
 2. CLI notifies the DO only after uploads finish. The DO verifies object identities, request eligibility and current show rules. R2 reads and media inspection checks happen before the SQL transaction; no network await belongs inside it.
 3. In one synchronous SQLite transaction, recognize a matching duplicate first, recheck the current expected revision and relevant show state, replace all affected accepted references, advance the revision, record the operation identity and mark publication as needing application. Throwing aborts the transaction. The revision/state recheck is needed because external awaits before this transaction can interleave with other requests.
 4. After commit, run publication using the latest accepted references. If publication fails, report accepted-but-incomplete. Retry restarts affected public work from the beginning and never undoes accepted source input merely because delivery failed.

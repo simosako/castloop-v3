@@ -1,5 +1,7 @@
 # Delivery URLs, caching and invalidation
 
+**Authority:** [Approved design](./docs/designs/castloop-mvp.md#detailed-implementation-plan). The approved Detailed Implementation Plan, sections 3 and 7, defines same-entrypoint purge, 404 withdrawal, per-show 301 migration and confirmed rollback. This note supplies policy/history; unresolved wording in older candidates does not override the approved design.
+
 * **Author:** Akira Shimosako
 * **Date:** 2026-11-07
 * **Status:** Accepted by the user: stable feed/audio URLs, revision-specific artwork URLs, 30-day shared-cache TTL for feed and media, client revalidation, explicit purge after origin updates/withdrawal, and record/report failures without automatic retry. Do not use short TTLs as insurance against hypothetical platform purge malfunction.

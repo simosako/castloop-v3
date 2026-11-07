@@ -1,8 +1,10 @@
 # Management R2 retention and asset ledger
 
+**Authority:** [Approved design](./docs/designs/castloop-mvp.md#detailed-implementation-plan). The approved Detailed Implementation Plan, sections 4–6, defines upload-first registration, per-object cleanup claims and source pins, elapsed-day cutoff, and export/restore. The pre-upload flow below remains superseded history.
+
 * **Author:** Akira Shimosako
 * **Date:** 2026-11-07
-* **Status:** Accepted direction: retain source versions, manage ownership/time in a SQLite ledger, and use explicit cleanup in the MVP. Fields and registration flow below are a minimal proposal for the technical draft.
+* **Status:** Accepted direction: retain source versions, manage ownership/time in a SQLite ledger, and use explicit cleanup in the MVP. Registration uses upload first, then acceptance or manual inventory. The earlier pre-upload flow below is superseded history.
 
 ## Scope
 
@@ -25,7 +27,11 @@ Current accepted references determine which assets are active. Keep last-valid-s
 
 Retain per-update acceptance revision/time and its selected source references if historical associations are needed during drafting. Do not claim an object list alone is a complete prior-show snapshot. MVP promises retained, identifiable material, not an implemented rollback operation or a full audit system.
 
-## Proposed registration and upload flow
+## Accepted registration direction
+
+Upload directly to attributable immutable R2 keys without an initial registration request. Register submitted, verified assets during the final SQLite acceptance transaction. Explicit manual inventory later registers abandoned uploads; before inventory they may have no SQL row. Inspect key ownership and object identity, and handle unaccepted entities without creating or publishing them. Missing ledger entries alone do not establish that an object is safe to delete. The approved Detailed Implementation Plan defines inventory and cleanup safeguards.
+
+## Earlier registration proposal (superseded)
 
 To account for a CLI failure before the existing final notification, recommend one small preparation call before file upload:
 
@@ -39,9 +45,9 @@ Keep show/episode IDs and operation identity in deterministic keys under the app
 
 ## Cleanup and deletion
 
-Provide explicit inventory/cleanup operations rather than immediate or periodic source deletion. Before destructive cleanup, show candidates and sizes and obtain administrator confirmation. Protect current selected assets, last-valid-show assets, and potentially active preparations. Missing/inaccessible SQL state is not evidence that all R2 objects are unused.
+Provide explicit CLI inventory/cleanup operations rather than immediate or periodic source deletion. Support an administrator-specified age-in-days filter measured from server-side R2 object storage time; define the exact command and cutoff boundary during Detailed Implementation. Before destructive cleanup, show candidates and sizes and obtain administrator confirmation. The primary requirement is never deleting files still in use: protect live selected assets, last-valid-show assets, and potentially active preparations regardless of age. Missing/inaccessible SQL state or uncertain ownership/usage is a reason to skip deletion, not evidence that objects are unused. Recheck references immediately before deletion and define coordination with acceptance to prevent selecting a candidate during its deletion.
 
-Recommend that normal show/episode deletion withdraw public resources and mark the management entity deleted while retaining its source assets and ownership records. Permanent source removal is an explicit maintenance action. This is consistent with the requested retention direction but exact delete/cleanup command behavior must be specified in drafting. Do not destroy a show DO's ledger when public show delivery is deleted.
+Accepted by author: normal show/episode deletion withdraws public resources and marks the management entity deleted while retaining its source assets and ownership records. Permanent source removal is a separate confirmed CLI cleanup action. Exact delete/cleanup command behavior must be specified in drafting. Do not destroy a show DO's ledger when public show delivery is deleted. Retention does not promise MVP undelete/rollback functionality.
 
 A later cleanup can intentionally discard older material; history cannot be restored after that removal. Report partial cleanup failures without losing the information needed to inspect remaining objects. Do not add stage-resume or a continuous garbage-collection service merely to implement manual cleanup.
 

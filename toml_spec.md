@@ -2,13 +2,13 @@
 
 * **Author:** Akira Shimosako
 * **Date:** 2026-11-07
-* **Status:** Proposed schema for discussion. The user has chosen Apple's RSS guidance as the baseline. Field spellings, defaults, and extended tag scope below are not yet approved.
+* **Status:** Mapping reference with accepted HTML/timezone/identity decisions and historical proposals. The concrete MVP schema and deferred extension scope are approved in [Detailed Implementation](./docs/designs/castloop-mvp.md#detailed-implementation-plan); mapping a tag here does not automatically put it in MVP scope.
 
 ## Baseline
 
-Use RSS 2.0 plus Apple's required and recommended metadata. Distinguish Apple requirements from Castloop's own publication rules. Incomplete TOML can still be stored in private management R2; publication errors must identify what is missing.
+Use RSS 2.0 plus Apple's required and recommended metadata. Distinguish Apple requirements from Castloop's own publication rules. Structurally valid incomplete TOML can still be stored in private management R2; publication errors must identify what is missing. The author-approved schema policy uses smol-toml plus shared strict Zod schemas: unknown keys and wrong types abort CLI preflight before upload and fail server acceptance. Missing publication-only fields remain draft/readiness issues. Historical/deferred fields in this mapping are not accepted MVP extensions.
 
-The mapping tables summarize [Apple's RSS guide](https://help.apple.com/itc/podcasts_connect/en.lproj/itcb54353390.html). Req = required, Rec = recommended, Cond = situational. The TOML names are Castloop proposals.
+The mapping tables summarize [Apple's RSS guide](https://help.apple.com/itc/podcasts_connect/en.lproj/itcb54353390.html). Req = required, Rec = recommended, Cond = situational. The approved MVP field names/scope are defined in the Detailed Implementation Plan; these broader mapping tables also include deferred fields.
 
 ## Show metadata
 
@@ -81,7 +81,7 @@ Apple distinguishes full, bonus, and trailer episodes. Episode numbers are requi
 
 Do not ask the administrator to manually edit an enclosure URL, file size, MIME type, or duration in the metadata template. The CLI obtains those from the successfully uploaded media revision and delivery configuration. MP3 uses `audio/mpeg`; enclosure length is bytes, not playback seconds. Verify object existence without downloading every remote MP3 during a normal check.
 
-Generate one episode GUID from its immutable UUID, for example `urn:uuid:<episode-uuid>`, with `isPermaLink="false"`. Preserve it across title edits, audio replacements, and domain migrations. Never derive it from a mutable media URL. Apple requires stable GUIDs and unique enclosure URLs between episodes. See [Apple's technical requirements](https://podcasters.apple.com/support/823-podcast-requirements). RSS specifies the non-permalink GUID attribute in its [GUID definition](https://cyber.harvard.edu/rss/rss.html#ltguidgtSubelementOfLtitemgt).
+Generate and persist an independent UUIDv4-based episode GUID, separate from its short CLI ID, for example `urn:uuid:<episode-uuid>`, with `isPermaLink="false"`. Preserve it across title edits, audio replacements, and domain migrations. Never derive it from a mutable media URL. Apple requires stable GUIDs and unique enclosure URLs between episodes. See [Apple's technical requirements](https://podcasters.apple.com/support/823-podcast-requirements). RSS specifies the non-permalink GUID attribute in its [GUID definition](https://cyber.harvard.edu/rss/rss.html#ltguidgtSubelementOfLtitemgt).
 
 Store the administrator's `published_at` in TOML and convert the resolved time to RSS date formatting. Preserve it during unrelated edits. Future datetimes are accepted; the distinction between a future RSS timestamp and automatic scheduled publication is discussed below.
 
@@ -95,9 +95,9 @@ Propose `timezone = "Asia/Tokyo"` in both show and normalized episode TOML, usin
 
 For comparisons, work with a resolved instant, not an unqualified local clock value. Generate an RSS timestamp with an explicit timezone offset or UTC. There is no new Apple-specific timezone tag in this proposal; `timezone` is Castloop configuration for interpretation and website presentation.
 
-Reject unknown timezone identifiers. Do not silently choose an interpretation for ambiguous or nonexistent local times around daylight-saving changes; report the problem. The accepted disambiguation format is a technical detail to settle during drafting.
+Reject unknown timezone identifiers. Accepted: `published_at` may always include a UTC offset, for unambiguous as well as repeated local times. An explicit offset is optional for unambiguous times and required to disambiguate repeated local times. For example, with `timezone = "America/New_York"`, `published_at = 2026-11-01T01:30:00-04:00` selects the earlier occurrence and `published_at = 2026-11-01T01:30:00-05:00` selects the later one. An ambiguous local datetime without an offset is a publication validation error; report the valid offset choices. Validate the supplied offset against the stored IANA timezone for that local datetime, rejecting inconsistencies and nonexistent local times even if an offset is supplied. Keep the IANA timezone and resolved instant; do not replace the zone with a fixed offset. Ordinary unambiguous local datetimes may omit the offset.
 
-Accepted: a future datetime schedules automatic release, even when the CLI has exited. Until it is due, withhold the episode's RSS entry and keep its MP3 out of public delivery storage. Once due, make the MP3 available before publishing its feed entry. A delay of one or two minutes is acceptable; second-precise release is unnecessary. A future `pubDate` alone does not implement this behavior. A once-per-minute Cron Trigger is the current minimal candidate; see [scheduled publication](./concepts_brief.md#scheduled-publication). The target covers Castloop's public resources and caches, not external podcast apps' polling schedules.
+Accepted: a future datetime schedules automatic release, even when the CLI has exited. Until it is due, withhold the episode's RSS entry and keep its MP3 out of public delivery storage. Once due, make the MP3 available before publishing its feed entry. A delay of one or two minutes is acceptable; second-precise release is unnecessary. A future `pubDate` alone does not implement this behavior. Use the accepted show DO alarm with SQL reservation and alarm updates in the same asynchronous storage transaction; Cron is superseded. The target covers Castloop's public resources and caches, not external podcast apps' polling schedules.
 
 Accepted: changing show timezone leaves existing episode TOML unchanged, preserving publication instants for published and reserved episodes. The planned website converts each episode instant to the current show timezone for display; regenerate static pages when show timezone changes.
 
@@ -113,7 +113,7 @@ Upload cover images directly to management R2 using the same object client as MP
 
 For a cover replacement, generate a new delivery filename and URL, for example `cover-<revision>.jpg`, and update RSS accordingly. Apple's [RSS artwork guidance](https://help.apple.com/itc/podcasts_connect/en.lproj/itcb54353390.html) calls for changing both the filename and URL when updating artwork. The management filename may remain `cover.jpg`; the public revision name is generated. A content digest is one possible revision identifier, not a new required user-maintained field.
 
-The command spelling `castloop show update-cover <show-id> cover.jpg` is a proposal. Define whether the command writes the current TOML filename itself or checks the existing filename during CLI design. A dedicated image generation or resizing service is unnecessary. Episode-specific artwork remains optional, and its asset-management scope is not yet selected.
+The approved command is `castloop show upload-cover <show-id> <path>`. It replaces the logical artwork filename already selected by accepted show TOML; choosing another logical filename requires editing/pushing TOML first. The upload command does not silently edit metadata. A dedicated image generation or resizing service is unnecessary. Episode-specific artwork is deferred beyond the MVP, together with chapters and transcripts.
 
 Apple's feed submission checks include artwork and media availability; HEAD and byte-range support are delivery requirements, not TOML fields. `castloop check` should distinguish metadata readiness from public delivery checks and from Apple's approval. See [Apple's validation guidance](https://podcasters.apple.com/support/829-validate-your-podcast).
 
@@ -127,7 +127,7 @@ Situational metadata is listed above so it is not mistaken for a universal publi
 
 Accepted: administrators write descriptions in TOML and may use a common, limited range of HTML formatting. This applies to show and episode descriptions and should remain usable by the planned static website.
 
-Proposed allowlist:
+Accepted allowlist (implementation decision 9, option B):
 
 | Purpose | Accepted tags |
 | --- | --- |
@@ -135,8 +135,12 @@ Proposed allowlist:
 | Emphasis | `strong`, `em`, `b`, `i` |
 | Lists | `ul`, `ol`, `li` |
 | Links | `a` with an HTTPS `href` |
+| Headings | `h2`, `h3` |
+| Quotations | `blockquote` |
+| Code | `pre`, `code` |
+| Separators | `hr` |
 
-The tag list is Castloop's proposed supported input, not a claim that Apple or every podcast app renders all of it. Apple's RSS guide explicitly describes paragraph/list/link markup and CDATA handling; it does not establish identical rendering for every formatting tag. In particular, bold and italic display should be treated as client-dependent.
+The tag list is Castloop's accepted supported input, not a claim that Apple or every podcast app renders all of it. Only `a` accepts a user-supplied attribute, `href`, which must be an absolute HTTPS URL. Other attributes, including classes, styles and event handlers, are unsupported. Display of supported markup remains client-dependent.
 
 Keep the source description in TOML. Validate parsed HTML against the allowlist before publication and emit only approved markup. Unsupported elements or attributes should produce a field-specific validation error, with the source still saved under the agreed TOML storage policy. Omit scripting, event handlers, custom styles, and embedded media from the supported format. Use a small established parser/sanitizer rather than regex-based HTML handling; choose the dependency during implementation planning.
 
@@ -158,7 +162,7 @@ These are proposed field spellings and illustrative values, not approved templat
 
 ```toml
 # show.toml
-id = "s-8d3e1e41-3672-4eda-a3e7-84fa261808c5"
+id = "s-k7m3q9t2"
 publish = false
 title = "Castloop Notes"
 description = "A weekly conversation about building small tools."
@@ -180,8 +184,8 @@ email = "admin@example.com"
 
 ```toml
 # episode.toml
-id = "e-b74e8766-afd3-445f-a884-411b23a88e3e"
-show_id = "s-8d3e1e41-3672-4eda-a3e7-84fa261808c5"
+id = "e-v4n8wc6r"
+show_id = "s-k7m3q9t2"
 publish = false
 title = "Building the first release"
 description = "The first episode introduces the project."
@@ -197,9 +201,9 @@ Accepted after Goldfish review: if an episode fails publication validation durin
 
 Show validation failure is explicitly different: return the errors but preserve the last valid public feed, existing media, and working artwork. A new show with no valid public feed remains unpublished. Do not replace a valid feed with invalid show data or stop it for a show TOML editing mistake. Reject episode additions and updates while current authoritative show TOML is invalid, returning its validation errors instead of accepting the operation using an older show revision. Also block previously registered episodes whose release time arrives while show TOML is invalid; keep their MP3s private and omit their feed entries. After an accepted show correction passes validation, immediately start publishing overdue episodes that still satisfy both publication flags and their own metadata/media validation; leave future reservations pending. The episode release datetime and its stored timezone remain in episode TOML; show TOML supplies the initial default, not a mutable interpretation for existing episodes. No extra episode edit is needed to resume these eligible releases. TOML syntax errors must abort locally before upload and leave all R2/public resources unchanged; identity/path validation is a separate technical detail.
 
-## Remaining decisions
+## Approved scope and historical mappings
 
-Show artwork management is decided: a filename in show TOML, a source file under the show's management prefix, and a CLI cover-update command. Show `website` is an existing administrator-supplied homepage or other appropriate website. Limited HTML descriptions are accepted; the specific allowlist and sanitizer choice are proposals. Administrator-specified publication times, future times, automatic scheduled release with an acceptable delay of one or two minutes, and persisted episode timezones with show-default initialization and show-timezone website display are accepted. The user selected one show DO for full feed generation with SQLite derived state; no explicit publish command. Updates, due releases and repair invoke the same full-generation operation. Exact scheduler wiring, field/command names, optional chapters/transcripts, schema and identity/path validation remain drafting details. R2 stays authoritative and media uploads go directly from the CLI to R2.
+Show artwork management is decided: a filename in show TOML, a source file under the show's management prefix, and a CLI cover-update command. Show `website` is an existing administrator-supplied homepage or other appropriate website. Limited HTML descriptions and the allowlist above are accepted; the parser/sanitizer dependency remains to be selected. Administrator-specified publication times, future times, automatic scheduled release with an acceptable delay of one or two minutes, and persisted episode timezones with show-default initialization and show-timezone website display are accepted. The user selected one show DO for full feed generation with authoritative SQLite selected-reference state; no explicit publish command. Updates, due releases and repair invoke the same full-generation operation. Exact scheduler wiring, field/command names, optional chapters/transcripts, schema and identity/path validation remain drafting details. R2 stores immutable content, while SQLite selects accepted versions; media uploads go directly from the CLI to R2. The approved Detailed Implementation Plan defines the concrete MVP field/command scope and supersedes earlier advanced mapping proposals. Historical rows describing chapters, transcripts, episode artwork or arbitrary Apple overrides do not put them in MVP scope.
 
 ## Episode unpublish
 

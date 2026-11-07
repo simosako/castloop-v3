@@ -1,5 +1,7 @@
 # Publication and full-restart recovery
 
+**Authority:** [Approved design](./docs/designs/castloop-mvp.md#detailed-implementation-plan). The approved Detailed Implementation Plan, sections 4–7, defines the shared executor, target signatures, source pins, atomic SQL/alarm changes and restore hold/resume. Older outstanding-topic references below are historical, not open author decisions.
+
 * **Author:** Akira Shimosako
 * **Date:** 2026-11-07
 * **Status:** Proposed step 3, following accepted staged R2 uploads and atomic SQLite acceptance. The user has accepted the minimum SQLite information groups and show DO alarms for scheduled publication. The user selected no automatic application retries in the MVP: record/report failures, email when configured, and restart from latest accepted state on administrator action.
@@ -32,7 +34,7 @@ Last-valid-show delivery may reference older source objects than current accepte
 
 Prefer at most one active publication run per show. A small in-memory busy flag can prevent ordinary overlapping execution; it is not a persistent distributed lock. Do not hold an SQL transaction or a broad concurrency block across R2 copying and cache requests.
 
-If another update is accepted while publication is busy, its SQL state remains pending and the caller receives accepted-but-pending rather than a false published result. After finishing a run, check for newer desired work and rerun from current input within a bounded execution budget. A restarted instance or late external write can still cause temporary overlap; preserve the accepted eventual-convergence policy. Do not make correctness depend solely on an in-memory pending flag.
+If another update is accepted while publication is busy, its SQL state remains pending and the caller receives accepted-but-pending rather than a false published result. One invocation performs one captured affected-show batch and does not loop over newer revisions. Any uncovered concurrent update remains visibly pending for explicit manual recovery, even if runtime remains. A restarted instance or late external write can still cause temporary overlap; preserve the accepted eventual-convergence policy. Do not make correctness depend solely on an in-memory pending flag.
 
 No durable FIFO is required. Coalescing several accepted changes into one application of latest intent is allowed. Stale runs never restore old accepted source state.
 

@@ -1,5 +1,7 @@
 # Publication errors and administrator notification
 
+**Authority:** [Approved design](./docs/designs/castloop-mvp.md#detailed-implementation-plan). The approved Detailed Implementation Plan defines Workers Logs plus compact current SQL failure state, optional restricted email through the management Worker, SQL/alarm transactions and explicit recover commands. Historical Issues/notification candidates below are not required integrations.
+
 * **Author:** Akira Shimosako
 * **Date:** 2026-11-07
 * **Status:** Show DO alarms accepted for scheduled publication. The user requires bounded failure handling, prioritizes recording and notification, and selected administrator email with name/address in show TOML. Accepted retry policy: no automatic application retries in the MVP. Record/report failures, email when optional Cloudflare mail setup is configured, and let the administrator initiate recovery from latest accepted input.
@@ -37,13 +39,13 @@ Include unresolved publication failures in the existing read-only `castloop chec
 
 If SQLite is unavailable, a failure may not be persistable there. Log through platform observability as a second diagnostic path. Hard termination and resource exhaustion can bypass application catch/record code; do not promise every failure reaches SQL or that application code can notify after execution has stopped.
 
-## Proposed notification approach
+## Historical notification alternative (superseded)
 
 Prefer platform observability and a configured notification destination before writing a notification delivery service inside castloop. Workers Logs provides diagnostic logs. Workers Issues can detect handled errors sent to `console.error`, group them, and use automation to send an issue to a webhook/chat destination. It is available to all Workers accounts and free during its current open beta. These are current service properties, not a permanent pricing guarantee. See [Workers Issues](https://developers.cloudflare.com/workers/observability/issues/).
 
 Issue automations can trigger at an occurrence threshold or after inactivity; they do not necessarily send one notification per publication failure. Notification is a prompt to inspect the durable castloop error result. See [Issue automations](https://developers.cloudflare.com/workers/observability/issues/automations/).
 
-The administrator's preferred destination is still unknown. Do not claim that logging alone is proactive notification, that an arbitrary email destination is supported by Issues, or that an unspecified webhook can send messages without setup. Confirm the desired destination before settling the integration. Validate DO alarm error capture in the selected observability configuration during implementation. No alerts or messages have been configured or sent during brainstorming.
+At the time of this historical alternative, the administrator destination had not been selected; the later accepted policy is optional verified administrator email. Do not claim that logging alone is proactive notification, that an arbitrary email destination is supported by Issues, or that an unspecified webhook can send messages without setup. Confirm the desired destination before settling the integration. Validate DO alarm error capture in the selected observability configuration during implementation. No alerts or messages have been configured or sent during brainstorming.
 
 If notification delivery fails, do not rerun podcast publication merely to resend the notification. The recorded publication failure remains visible through CLI inspection and platform logs. Avoid a dedicated notification queue for the MVP unless an agreed requirement makes it necessary.
 
