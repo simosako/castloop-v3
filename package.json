@@ -1,0 +1,22 @@
+{
+  "name": "castloop",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "test:domain": "bun test packages/domain/test",
+    "test:cli": "bun run build:cli && bun test packages/cli/test",
+    "test:workers": "vitest run --config packages/worker/vitest.config.ts",
+    "types:worker": "wrangler types packages/worker/worker-configuration.d.ts -c packages/worker/wrangler.jsonc",
+    "typecheck": "bun run types:worker && tsc --noEmit",
+    "build:cli": "bun build packages/cli/src/main.ts --compile --outfile dist/castloop"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@cloudflare/vitest-plugin": "latest",
+    "@cloudflare/workers-types": "latest",
+    "vitest": "latest",
+    "wrangler": "latest",
+    "typescript": "latest"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "castloop-management",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-04",
+  "observability": { "enabled": true, "traces": { "enabled": true } },
+  "durable_objects": { "bindings": [{ "name": "SHOWS", "class_name": "ShowDO" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ShowDO"] }]
+}

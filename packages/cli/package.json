@@ -1,0 +1,14 @@
+{
+  "name": "@castloop/cli",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@castloop/domain": "workspace:*",
+    "commander": "latest",
+    "music-metadata": "latest",
+    "image-size": "latest",
+    "jpeg-js": "latest",
+    "pngjs": "latest",
+    "@types/pngjs": "latest"
+  }
+}

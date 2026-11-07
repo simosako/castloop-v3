@@ -1,0 +1,6 @@
+{
+  "name": "@castloop/worker",
+  "private": true,
+  "type": "module",
+  "dependencies": { "@castloop/domain": "workspace:*" }
+}
