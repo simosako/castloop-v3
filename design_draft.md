@@ -1,7 +1,7 @@
 # Castloop MVP
 
 * **Author:** Akira Shimosako
-* **Status:** Draft — Overview and Goals and Technical Plan approved. Explicit open choices remain before implementation; subsequent sections are not yet approved.
+* **Status:** Draft — Overview and Goals, Technical Plan, and Alternatives Considered approved. Explicit open choices remain before implementation.
 * **Date:** 2026-11-07
 * **Predecessor:** [Consolidated concepts brief](./concepts_brief.md)
 
@@ -321,8 +321,84 @@ The repository currently contains design documents, so these are proposed new im
 
 The Detailed Implementation Plan will enumerate every concrete source, configuration, documentation and test file, with its rationale. This section does not authorize production implementation.
 
+## Alternatives Considered
+
+These alternatives come from the predecessor's recorded decisions and the approved Technical Plan review. They explain the chosen direction; they do not turn the open choices in Technical Plan section 13 into rejected options.
+
+### 1. Proxy MP3 uploads through a Worker
+
+* **Benefit:** CLI could use one management API without separate direct-object access.
+* **Cost:** Large audio bodies would pass through the Worker, adding request-size and execution constraints to the upload path. Success with a 50 MB example would not establish support for larger files.
+* **Decision:** Rejected by author: upload audio directly from CLI to management R2 through its S3-compatible API. Keep the Worker for small management requests. Promotion requests use R2-side copying rather than transferring MP3 bodies through the DO.
+
+### 2. Require native R2 APIs for every operation
+
+* **Benefit:** A uniform Cloudflare-native interface would avoid introducing an S3-compatible client and its credentials.
+* **Cost:** Uniformity would not satisfy the selected direct-upload and R2-side-copy path with the same API surface. Routing file bodies through a Worker merely to use bindings would conflict with the upload decision.
+* **Decision:** Rejected by author as a constraint: accept S3 credentials for direct object operations and use native bindings where appropriate. Supporting another cloud provider is not a goal of this choice.
+
+### 3. Generate RSS in the CLI behind a manual publish command
+
+* **Benefit:** Feed generation would use the administrator's local CPU and avoid server-side XML generation.
+* **Cost:** An unattended scheduled release would still need Cloudflare-side execution or prepared future feeds with their own invalidation rules. Requiring another command would separate ordinary metadata updates from automatic publication.
+* **Decision:** Rejected by author: the show DO generates complete feeds automatically after accepted changes and at release time. There is no normal manual publish gate. Explicit recovery of failed publication is a separate administrative action.
+
+### 4. Generate the feed in an ordinary Worker and scan with Cron
+
+* **Benefit:** A management Worker could combine routing, periodic discovery and feed generation without a show-specific executor.
+* **Cost:** Feed generation and archive reads would rely on the ordinary Worker execution allowance. Periodic scans would also need rules distinguishing accepted changes from abandoned preparation and failed work from unattempted reservations.
+* **Decision:** Rejected or superseded by author: use one DO per show for feed execution and a DO alarm for its next reservation. CLI uploads become accepted only through the explicit SQLite acceptance transaction. No Cron scan accepts leftovers or retries failed publication.
+
+### 5. Select current versions through an R2 manifest or a separate D1 store
+
+* **Benefit:** An R2 manifest could make one object the selection boundary; D1 could provide a shared relational store across shows.
+* **Cost:** An authoritative manifest would still need integration with the selected DO executor, reservations and outcomes. D1 would add a separate database boundary to per-show state. Keeping either as a second live authority alongside SQL-selected references would require synchronization rules.
+* **Decision:** Rejected by author in favor of show-local DO SQLite: commit accepted source references and operation identity there. R2 retains immutable bodies. SQLite is persistent management data, not a disposable index reconstructible from arbitrary R2 objects. Manual export/restore addresses that responsibility.
+
+### 6. Use Git/GitHub or synchronize the entire media archive
+
+* **Benefit:** Git offers history, diffs and merge tools for metadata. Full synchronization gives every computer a local copy of the complete archive.
+* **Cost:** Git/GitHub would become an external workflow dependency. Full media synchronization makes a new workspace download potentially large MP3 archives. Automatic merge and a built-in diff interface add behavior beyond the selected MVP.
+* **Decision:** Rejected by author for the MVP: pull/push metadata only, keep audio transfer separate, and preserve divergent local TOML in unique backup files. The administrator compares and edits those files using their own tools. Missing local files never imply remote deletion.
+
+### 7. Enforce strict public isolation with distributed locks or an ordered queue
+
+* **Benefit:** Serial execution could prevent some CLI/alarm overlap and reduce temporary stale public writes.
+* **Cost:** A strict lock needs ownership and failure-release rules. An ordered queue needs ordering, duplicate and interruption semantics. Neither alone creates a transaction across SQLite, public R2 objects and caches.
+* **Decision:** Rejected by author as a baseline requirement: temporary public inconsistency is acceptable when recovery can apply latest accepted intent. Use durable desired/outcome state and a small per-show runner, not a custom FIFO or distributed lock service. Source acceptance still requires its SQL transaction and stale-update checks.
+
+### 8. Resume publication at the last completed processing stage
+
+* **Benefit:** A retry could skip copies or rendering already completed before a failure.
+* **Cost:** Determining which partial effects remain valid requires stage records and rules for source changes, incomplete copies and cache operations. The extra machinery is not justified for the selected workload.
+* **Decision:** Rejected by author: restart affected publication from deletion using current accepted input and regenerate the whole RSS document. Preserve unrelated unchanged audio. Do not store processing-stage cursors or patch XML incrementally.
+
+### 9. Automatically retry failed publication
+
+* **Benefit:** Transient failures could clear without administrator action.
+* **Cost:** The application would need retry limits, backoff and rules preventing a later reservation from repeatedly reviving a failed target. Repetition can obscure a persistent error rather than explain it.
+* **Decision:** Rejected by author for the MVP: record current failure state, emit diagnostics, optionally email the administrator and support explicit recovery. Do not rearm failed past-due work as an application retry. Platform alarm redelivery remains a separate execution characteristic.
+
+### 10. Use short cache lifetimes as insurance against purge failure
+
+* **Benefit:** Old responses would expire sooner if an update or withdrawal failed to purge them.
+* **Cost:** Short freshness reduces cache reuse even when normal purge succeeds. It would add a fallback policy the author does not require.
+* **Decision:** Rejected by author: use the agreed 30-day shared freshness, client revalidation and explicit purge. Trust the documented Cloudflare purge contract, check normal errors and report failure as incomplete publication. Do not add a global-cache audit or promise recall of files already downloaded.
+
+### 11. Build an application error-log archive in SQLite
+
+* **Benefit:** Castloop could keep and query detailed historical errors independently of platform log retention.
+* **Cost:** It would need storage/retention rules and a log-viewing interface, duplicating available Cloudflare diagnostics.
+* **Decision:** Rejected by author during Technical Plan review: put diagnostic events and exception stacks in Workers Logs. SQLite retains only compact current unresolved outcomes needed by check, scheduling and recovery. Log expiry must not make a known failed release appear unattempted.
+
+### 12. Include listener analytics and generated podcast websites in the MVP
+
+* **Benefit:** The administrator could inspect popularity and listeners could browse/play episodes directly on a Castloop-generated site.
+* **Cost:** Analytics would need a measurement contract across both delivery paths, while generated websites add HTML output, navigation and rebuild behavior beyond RSS/media hosting.
+* **Decision:** Rejected by author for MVP scope: omit Castloop analytics and allow administrators to use external distribution-platform statistics. Generated static podcast websites remain a planned extension, including dates displayed in the current show timezone. Their custom-domain requirement is still undecided.
+
 ## Subsequent Sections
 
-Alternatives Considered and the Detailed Implementation Plan remain to be drafted after the Technical Plan review. The predecessor already records rejected alternatives; the later section will carry those reasons forward without treating open choices above as rejected.
+Alternatives Considered is approved. Next, resolve the explicit open choices in Technical Plan section 13 and draft the Detailed Implementation Plan. Approval of the preceding sections does not silently choose among those alternatives.
 
 *Drafted with EGM*
