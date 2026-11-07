@@ -1,7 +1,7 @@
 # Castloop MVP
 
 * **Author:** Akira Shimosako
-* **Status:** Draft — Overview and Goals approved. Technical Plan awaiting review; explicit open choices remain before implementation.
+* **Status:** Draft — Overview and Goals and Technical Plan approved. Explicit open choices remain before implementation; subsequent sections are not yet approved.
 * **Date:** 2026-11-07
 * **Predecessor:** [Consolidated concepts brief](./concepts_brief.md)
 
@@ -101,7 +101,9 @@ All management reads and mutations require installation-level administrator auth
 
 ### 2. Identity, source objects and local layout
 
-The proposed concrete identity format is lowercase `s-<UUIDv4>` for shows and `e-<UUIDv4>` for episodes. This implements the agreed distinguishable, CLI-generated IDs. Route and TOML identities must agree. A creation request fails if the identity already exists; retrying the same creation operation is handled separately from a collision.
+The accepted identifier format is `s-` for shows or `e-` for episodes followed by eight lowercase Base32 characters, for example `s-k7m3q9t2` and `e-v4n8wc6r`. Use cryptographically secure, unbiased randomness and the alphabet `0123456789abcdefghjkmnpqrstvwxyz`, which omits easily confused letters. IDs are ten characters including the prefix. They are identifiers, not credentials.
+
+Eight Base32 characters provide 40 random bits, or 1,099,511,627,776 possibilities. For 1,000 independently generated IDs in one namespace, the probability of any collision before checking is approximately 0.0000454%. Randomness does not guarantee uniqueness: show creation checks the deterministically addressed DO's existing control record, and episode creation enforces uniqueness within its show in SQL. On a confirmed collision for a new entity, CLI generates another candidate. An uncertain retry keeps the original operation and target IDs. Route and TOML identities must agree. No global episode registry is needed; episode operations include show context.
 
 Proposed immutable management keys preserve show/episode ownership:
 
@@ -124,7 +126,7 @@ The administrator's workspace remains simple:
 
 Local audio files need not mirror all remote versions. The cover filename in TOML is a logical source name within the show; SQLite resolves that name to an immutable stored object. Pull materializes selected TOML at the local canonical paths rather than exposing version-key layout as an editing requirement.
 
-Episode GUIDs are generated from the immutable UUID as `urn:uuid:<episode-uuid>`, emitted with `isPermaLink="false"`. They remain unchanged after metadata, media or domain changes.
+Episode RSS GUIDs remain stable and independent of mutable URLs. The previous proposal derived a `urn:uuid:` GUID from the UUID inside the episode ID. With short management IDs, that derivation no longer applies. Retaining the same GUID format would require generating and persisting an independent UUID at episode creation; alternatively, GUIDs can use a stable show/episode-ID-based value. This representation remains an explicit open choice; never label a short non-UUID identifier as `urn:uuid:`. In either case emit `isPermaLink="false"` and preserve the GUID across metadata, media and domain changes.
 
 ### 3. SQLite information model
 
@@ -137,7 +139,9 @@ The following groups describe required information, not a mandated number of phy
 | Publication outcomes | Desired work identity; last completed feed outcome; affected episode outcomes; unresolved error/retry requirement | Distinguish source acceptance from applied delivery, including withdrawals |
 | Last valid delivery references | References needed by the last valid show feed and its media/artwork | Protect working delivery after invalid show input and during source cleanup |
 | Source asset ledger | Object key; owner show/episode; kind; preparation operation; registration/storage time; confirmed size and identity | Account for active, historical and abandoned source material |
-| Errors | Error ID/time; target; revision/operation; trigger; code/message; failed action and notification outcome | Explain unresolved problems without an unlimited event log |
+| Current failure state, within publication outcomes | Target; revision/operation; incomplete or failed state; compact code/message; failure time and notification outcome | Keep unresolved work visible to check/recovery after diagnostic logs expire; no separate error-history table |
+
+Detailed diagnostics and exception stacks go to Cloudflare Workers Logs, not SQLite. The current failure state above is operational state, not a log archive. SQLite does not store every error event or implement a log viewer.
 
 An outcome includes whether intended public absence has been applied. Removing an episode must not immediately erase the identity needed to finish its public cleanup.
 
@@ -223,7 +227,7 @@ Each show DO schedules its earliest eligible unattempted release. One DO can hav
 
 After a normal invocation, select the next future eligible reservation. A failed past-due target is marked incomplete and excluded from automatic rearming. A valid show repair explicitly reevaluates overdue eligible episodes; unpublished or still-invalid episodes remain private.
 
-An alarm handler catches expected publication failures, persists the error and returns without arranging an application retry. Platform alarms provide at-least-once execution and may retry uncaught exceptions; durable completion/failure outcomes prevent known finished or failed work from being treated as fresh. Hard termination can still cause platform redelivery. See [DO alarm semantics](https://developers.cloudflare.com/durable-objects/api/alarms/).
+An alarm handler catches expected publication failures, records the compact current failure outcome in SQLite, emits diagnostic details to Workers Logs and returns without arranging an application retry. Platform alarms provide at-least-once execution and may retry uncaught exceptions; durable completion/failure outcomes prevent known finished or failed work from being treated as fresh. Hard termination can still cause platform redelivery. See [DO alarm semantics](https://developers.cloudflare.com/durable-objects/api/alarms/).
 
 **Open transaction boundary:** Saving a new reservation and scheduling its alarm must not leave a committed reservation with no wakeup because the process stopped between those operations. Two possible mechanisms are recorded in section 13. `setAlarm()` is asynchronous, so placing it inside a synchronous SQL callback is not a valid implementation. This boundary requires selection and a crash test before the plan is implementation-ready.
 
@@ -257,7 +261,11 @@ Management responses carry acceptance state, accepted revision/operation, valida
 
 `castloop check` is read-only. It loads selected metadata, validates it, checks referenced object metadata and reports unresolved delivery/notification errors. It does not download the archive, mutate source, release overdue episodes or delete invalid public resources. Public HEAD/range probes are diagnostics distinct from source validity.
 
-Persist actionable errors before optional email. Keep errors for unrelated unresolved targets when another operation succeeds. A successful recovery clears/resolves only the failures it actually addresses. Never log credentials or publish private administrator fields.
+Use Cloudflare Workers Logs for structured diagnostic events and exception stacks. Include show ID, episode ID when applicable, operation ID, accepted revision, trigger/action and error code so administrators can filter related events in Cloudflare's dashboard. Enable logging for the management Worker and its DO class. DO logs are available through the namespace's Observability tab. See [Workers Logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/) and [DO logging](https://developers.cloudflare.com/durable-objects/observability/metrics-and-analytics/#view-logs).
+
+SQLite retains only each target's current unresolved failure outcome and compact actionable reason, as part of publication state. Persist this before optional email. Detailed event history and stacks are not copied into SQL. Platform log retention must not determine whether Castloop remembers a known failed release: `castloop check` still reports it after logs expire, and later reservations must not mistake it for unattempted work. No custom log collection pipeline, SQL log viewer or required Workers Issues integration is introduced.
+
+Keep failure state for unrelated unresolved targets when another operation succeeds. A successful recovery clears/resolves only the failures it actually addresses. Never log credentials or publish private administrator fields.
 
 If mail is configured, send to the verified administrator destination from the configured sender domain. Otherwise report notification as unconfigured and keep normal publishing available. Mail failure is recorded separately and does not repeat publication or trigger an email recursion.
 
@@ -294,6 +302,7 @@ The following are unselected implementation choices. Approving the architecture 
 | Reservation/alarm atomicity | Storage transaction containing SQL and Alarm API operations; or arm a conservative wakeup before the final synchronous acceptance transaction | First depends on verified mixed-storage transaction behavior and tests; second can leave harmless extra wakeups and must preserve any earlier reservation. Neither includes R2 I/O. |
 | Normal deletion of private source | Retain tombstoned management entities/assets until explicit cleanup; or erase their source through a separately confirmed destructive operation | Retention preserves future recovery material; erasure loses it and needs exact scope. Public withdrawal is required in either case. |
 | Discovery of shows | Enumerate attributable management R2 show prefixes and query their DOs; or retain a small installation catalogue | Prefix enumeration avoids another live store but must handle unaccepted preparations; a catalogue requires its own consistency rules. No global registry has been selected. |
+| RSS GUID representation | Generate and persist an independent UUID-based GUID at creation; or use an immutable show/episode-ID-based value | Both preserve identity across URL changes; the first stores another identifier, while the second changes the earlier UUID-based representation. The short CLI identifier is already agreed. |
 | Remaining external details | Exact CLI/API schemas, cover command association, HTML scope, DST disambiguation, deletion HTTP status, migration redirect/RSS signaling and export/restore behavior | These affect administrator or listener behavior and must be explicit before implementation rather than guessed by an implementation agent. |
 
 No capacity limit or Free-plan fit is asserted. Verify representative episode archives, SQL/R2 operation counts, CPU/runtime, large direct upload, server-side copy, range serving, reservation crash boundaries and purge behavior before setting supported limits.

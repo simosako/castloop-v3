@@ -22,7 +22,7 @@ On administrator recovery, read current accepted input and restart affected publ
 
 ### Content management
 
-* Support multiple shows with stable show and episode IDs. IDs are CLI-generated, distinguish their entity type, and use safe R2 key characters. Detect creation collisions; R2 has prefixes rather than real directories.
+* Support multiple shows with stable show and episode IDs. Accepted during draft review: `s-` / `e-` followed by eight lowercase Base32 characters generated with cryptographically secure randomness, with authoritative creation collision checks. Episode uniqueness is within its show. IDs are ten characters including the prefix. R2 has prefixes rather than real directories.
 * Manage show and episode metadata through TOML, including title and description edits. Do not introduce field-by-field title update flags as the primary workflow.
 * Provide metadata-only pull/push with a local show/episode directory tree. MP3 transfers are separate; pulling on a new computer does not download the audio archive.
 * Default both show and episode `publish` to `false`.
@@ -107,7 +107,7 @@ MVP has no automatic application retries. Record/report errors and wait for admi
 
 Provide a minimal administrator retry action that reads latest accepted state and rebuilds affected delivery from the beginning. This is distinct from retrying uncertain source acceptance with its original operation ID.
 
-Record current unresolved errors in SQLite with identity, time, target, accepted revision/operation, trigger and actionable diagnostics. Platform logs cover failures that prevent recording. Exact error columns and alarm arming/crash behavior remain drafting work. Platform alarm redelivery is distinct from an application retry policy; do not promise exactly-once execution.
+Accepted during draft review: use Cloudflare Workers Logs for detailed diagnostic events, exception stacks and dashboard investigation. SQLite retains only current unresolved failure state within publication outcomes: target, revision/operation, failure time and compact actionable code/message. Do not implement an SQL error-history table or log viewer. This minimal operational state survives log expiry and supports check/recovery and failed-reservation handling. Platform logs also cover failures that prevent recording. Exact state columns and alarm arming/crash behavior remain drafting work. Platform alarm redelivery is distinct from an application retry policy; do not promise exactly-once execution.
 
 ### Administrator email
 
