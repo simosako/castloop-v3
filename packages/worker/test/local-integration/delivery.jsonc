@@ -1,0 +1,9 @@
+{
+  "name": "castloop-local-integration-delivery",
+  "main": "delivery.mjs",
+  "compatibility_date": "2026-11-04",
+  "cache": { "enabled": true },
+  "vars": { "CUSTOM_DELIVERY_BASE": "" },
+  "services": [{ "binding": "ROUTING", "service": "castloop-local-integration-management", "entrypoint": "Routing" }],
+  "r2_buckets": [{ "binding": "DELIVERY_BUCKET", "bucket_name": "test-delivery" }]
+}

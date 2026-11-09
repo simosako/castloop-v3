@@ -2,5 +2,5 @@
   "name": "@castloop/worker",
   "private": true,
   "type": "module",
-  "dependencies": { "@castloop/domain": "workspace:*" }
+  "dependencies": { "@castloop/domain": "workspace:*", "aws4fetch": "latest", "fast-xml-parser": "latest" }
 }

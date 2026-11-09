@@ -1,6 +1,7 @@
 import { XMLValidator } from "fast-xml-parser";
 import { renderDescription } from "./html";
 import type { Episode, Show } from "./validation";
+import { hasInvalidXmlCharacters } from "./xml-characters";
 
 export interface FeedEpisode {
   metadata: Episode;
@@ -20,7 +21,7 @@ export interface FeedInput {
 }
 
 function xml(value: string): string {
-  if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/u.test(value)) throw new Error("Invalid XML character");
+  if (hasInvalidXmlCharacters(value)) throw new Error("Invalid XML character");
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&apos;");
 }
 function tag(name: string, value: string | number): string { return `<${name}>${xml(String(value))}</${name}>`; }

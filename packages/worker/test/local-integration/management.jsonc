@@ -1,0 +1,29 @@
+{
+  "name": "castloop-local-integration-management",
+  "main": "bridge.mjs",
+  "compatibility_date": "2026-11-04",
+  "vars": {
+    "ADMIN_TOKEN": "local-integration-token",
+    "DELIVERY_BASE": "https://delivery.example.test",
+    "CUSTOM_DELIVERY_BASE": "",
+    "CUSTOM_ZONE_ID": "",
+    "R2_ACCOUNT_ID": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "R2_MANAGEMENT_BUCKET": "test-bucket",
+    "R2_DELIVERY_BUCKET": "test-delivery",
+    "R2_COPY_ACCESS_KEY_ID": "local-test",
+    "R2_COPY_SECRET_ACCESS_KEY": "local-test",
+    "EMAIL_FROM": "",
+    "EMAIL_TO": ""
+  },
+  "r2_buckets": [
+    { "binding": "MANAGEMENT_BUCKET", "bucket_name": "test-bucket" },
+    { "binding": "DELIVERY_BUCKET", "bucket_name": "test-delivery" }
+  ],
+  "services": [
+    { "binding": "DELIVERY_SERVICE", "service": "castloop-local-integration-delivery" },
+    { "binding": "NOTIFIER", "service": "castloop-local-integration-management", "entrypoint": "Notifier" }
+  ],
+  "send_email": [{ "name": "EMAIL" }],
+  "durable_objects": { "bindings": [{ "name": "SHOWS", "class_name": "ShowDO" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ShowDO"] }]
+}

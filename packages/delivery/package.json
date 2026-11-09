@@ -1,0 +1,8 @@
+{
+  "name": "@castloop/delivery",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@castloop/domain": "workspace:*"
+  }
+}

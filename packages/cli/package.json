@@ -4,6 +4,8 @@
   "type": "module",
   "dependencies": {
     "@castloop/domain": "workspace:*",
+    "@aws-sdk/client-s3": "latest",
+    "@aws-sdk/lib-storage": "latest",
     "commander": "latest",
     "music-metadata": "latest",
     "image-size": "latest",

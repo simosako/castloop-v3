@@ -1,0 +1,11 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "castloop-delivery",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-04",
+  "cache": { "enabled": true },
+  "observability": { "enabled": true, "traces": { "enabled": true } },
+  "vars": { "CUSTOM_DELIVERY_BASE": "" },
+  "services": [{ "binding": "ROUTING", "service": "castloop-management", "entrypoint": "Routing" }],
+  "r2_buckets": [{ "binding": "DELIVERY_BUCKET", "bucket_name": "castloop-delivery" }]
+}

@@ -10,6 +10,7 @@ export const objectRefSchema = z.strictObject({
   key: nonempty, etag: nonempty, size: safeInteger,
   sha256: z.string().regex(/^[0-9a-f]{64}$/).nullable(),
 });
+export type ObjectRef = z.infer<typeof objectRefSchema>;
 const preparedRef = objectRefSchema.extend({ sha256: z.string().regex(/^[0-9a-f]{64}$/) });
 const showEdit = z.strictObject({ mode: z.enum(["create", "update"]), metadata: preparedRef });
 const episodeEdit = z.discriminatedUnion("mode", [
@@ -32,8 +33,25 @@ export const operationSchema = z.discriminatedUnion("action", [
   z.strictObject({ ...base, action: z.literal("episode.delete"), payload: z.strictObject({ episode_id: id, confirmed: z.literal(true) }) }),
   z.strictObject({ ...base, action: z.literal("show.delete"), payload: z.strictObject({ confirmed: z.literal(true) }) }),
   z.strictObject({ ...base, action: z.literal("delivery.set"), payload: z.strictObject({ target_base: nonempty, confirmed: z.literal(true) }) }),
+  z.strictObject({ ...base, action: z.literal("restore"), payload: z.strictObject({ snapshot: preparedRef, replace: z.boolean(), confirmed: z.literal(true) }) }),
+  z.strictObject({ ...base, action: z.literal("restore-resume"), payload: z.strictObject({ confirmed: z.literal(true) }) }),
 ]);
 export type Operation = z.infer<typeof operationSchema>;
+export const recoverRequestSchema = z.strictObject({ protocol_version: z.literal(1), operation_id: uuid, expected_revision: safeInteger, episode_id: id.optional() });
+export type RecoverRequest = z.infer<typeof recoverRequestSchema>;
+export const restoreRequestSchema = z.strictObject({ ...base, snapshot: preparedRef, replace: z.boolean(), confirmed: z.literal(true) });
+export type RestoreRequest = z.infer<typeof restoreRequestSchema>;
+export const restoreResumeRequestSchema = z.strictObject({ ...base, confirmed: z.literal(true) });
+export type RestoreResumeRequest = z.infer<typeof restoreResumeRequestSchema>;
+const cleanupKeys = z.array(nonempty).min(1).max(100).refine(keys => new Set(keys).size === keys.length, "Duplicate keys");
+export const cleanupClaimSchema = z.strictObject({ protocol_version: z.literal(1), operation_id: uuid, older_than_days: positive,
+  candidates: z.array(objectRefSchema).min(1).max(100).refine(refs => new Set(refs.map(ref => ref.key)).size === refs.length, "Duplicate keys") });
+export const cleanupCompleteSchema = z.strictObject({ protocol_version: z.literal(1), operation_id: uuid, keys: cleanupKeys });
+export type CleanupClaim = z.infer<typeof cleanupClaimSchema>;
+export type CleanupComplete = z.infer<typeof cleanupCompleteSchema>;
+export const inventoryRegisterSchema = z.strictObject({ protocol_version: z.literal(1), objects: z.array(objectRefSchema).min(1).max(100)
+  .refine(refs => new Set(refs.map(ref => ref.key)).size === refs.length, "Duplicate keys") });
+export type InventoryRegister = z.infer<typeof inventoryRegisterSchema>;
 
 /** Canonical JSON for request identity. Reject values that JSON would silently change. */
 export function canonicalJson(value: unknown): string {
