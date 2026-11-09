@@ -66,6 +66,16 @@ A local export/cleanup interleaving test changes the selected Show source after 
 
 A restore/cleanup interleaving test claims a required source after the restore's object check begins but before its SQL commit. The restore is rejected, the Show remains absent, and the claim remains recorded. The cleanup claim is injected through the local R2 test wrapper; this does not exercise remote R2 races.
 
+## Environment for live testing
+
+The administrator has authorized agents to use `bunx wrangler` to create and debug a Cloudflare test environment, and to use either the project's generated fixtures or the podcast samples described below for live tests. Use a clearly identified test installation and avoid modifying unrelated resources.
+
+On 2026-11-09, `bunx wrangler --version` reported 4.158.0 and `bunx wrangler whoami` authenticated successfully using the account API token in `CLOUDFLARE_API_TOKEN`. `CLOUDFLARE_ACCOUNT_ID` was also set and matched the account returned by `whoami`. These observations do not establish that the token has every permission needed for deployment or operation; verify the required permissions as the test proceeds. Do not print or commit token values.
+
+`CASTLOOP_TRIAL_ASSETS` points to a directory outside this repository. Its `normal/` subdirectory contained 36 MP3 files (about 28–60 MiB each), 36 Episode TOML files, a Show TOML, artwork and source/import metadata at the time of inspection. The administrator has allowed these samples to be used for testing. Inspect their contents and compatibility with the current CLI before use; file presence alone is not a validation. The generated 50 MiB and 100 MiB silent samples described below can be used where larger media is needed. Keep downloaded tools and generated test assets under the ignored project directory `.local-test/`.
+
+The Cloudflare API token and account ID are not by themselves the complete castloop CLI configuration. The current CLI separately requires an administrator token for the management Worker and R2 S3-compatible access key ID and secret access key for direct object operations; the Worker also needs appropriate copy credentials. Consult [deployment](deployment.md) and [operations](operations.md), provision only the credentials needed for the test, and keep their values out of source control and logs.
+
 ## Disposable deployment smoke
 
 `bun run verify:deployed` requires the explicit `--disposable` acknowledgement and does not run as part of local tests. It uploads audio and changes the specified Episode, so use only a dedicated disposable installation and Episode. Prepare a published Show with cover and a new Episode whose TOML has `publish = true` and a future `published_at`; push both metadata files first, and retain the Episode's GUID from the metadata export. Select a release time between 30 seconds and 30 minutes in the future, leaving enough time to hash and upload the file. Run from the repository root, for example:
