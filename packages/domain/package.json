@@ -2,7 +2,7 @@
   "name": "@castloop/domain",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts", "./origin": "./src/origin.ts" },
+  "exports": { ".": "./src/index.ts", "./origin": "./src/origin.ts", "./identity": "./src/identity.ts", "./contracts": "./src/contracts.ts" },
   "dependencies": {
     "@js-temporal/polyfill": "latest",
     "fast-xml-parser": "latest",

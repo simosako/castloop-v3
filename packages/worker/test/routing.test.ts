@@ -233,16 +233,8 @@ test("accepted show and audio changes invoke the publication executor through th
   const episodeId = "e-01234567";
   const endpoint = `https://example.test/v1/shows/${showId}/operations`;
   const headers = { authorization: "Bearer local-test-token", "content-type": "application/json" };
-  const copied: string[] = [];
-  let failedCopy = "";
-  const transport = vi.spyOn(globalThis, "fetch").mockImplementation(async input => {
-    const request = input instanceof Request ? input : new Request(input);
-    expect(new URL(request.url).hostname).toBe("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.r2.cloudflarestorage.com");
-    expect(request.headers.get("x-amz-copy-source-if-match")).toBeTruthy();
-    copied.push(new URL(request.url).pathname);
-    if (failedCopy && new URL(request.url).pathname.includes(failedCopy)) return new Response("<Error><Code>InjectedFailure</Code></Error>");
-    return new Response('<CopyObjectResult><ETag>"copied"</ETag></CopyObjectResult>');
-  });
+  const copier = env.COPIER as unknown as { history(): Promise<string[]>; setFailure(path: string): Promise<void>; reset(): Promise<void> };
+  await copier.reset();
   try {
     const id = (n: number | string) => `${n}2345678-1234-4234-8234-123456789abc`;
     const put = async (key: string, text: string) => {
@@ -268,7 +260,7 @@ test("accepted show and audio changes invoke the publication executor through th
     const feed = await (await env.DELIVERY_BUCKET.get(`${showId}/feed.xml`))!.text();
     expect(feed).toContain(guid);
     expect(feed).toContain(`/${showId}/${episodeId}/audio.mp3`);
-    expect(copied).toEqual(expect.arrayContaining([expect.stringContaining(`/${showId}/covers/`), expect.stringContaining(`/${showId}/${episodeId}/audio.mp3`)]));
+    expect(await copier.history()).toEqual(expect.arrayContaining([expect.stringContaining(`/${showId}/covers/`), expect.stringContaining(`/${showId}/${episodeId}/audio.mp3`)]));
     const futureId = "e-12345678";
     const futureGuid = "urn:uuid:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
     const due = Date.now() + 60 * 60 * 1000;
@@ -318,33 +310,33 @@ test("accepted show and audio changes invoke the publication executor through th
     const secondAudio = await put(`${showId}/${secondLater}/_versions/${id("a")}/audio.mp3`, "second later");
     await send(9, id("a"), "audio.set", { episode_id: secondLater, audio: secondAudio, facts: { mime: "audio/mpeg", duration_ms: 1000 } });
     await runInDurableObject(stub, async (_instance: ShowDO, state) => { expect(await state.storage.getAlarm()).toBe(firstAt); });
-    failedCopy = `/${firstLater}/audio.mp3`;
+    await copier.setFailure(`/${firstLater}/audio.mp3`);
     clock.mockReturnValue(firstAt + 1);
     expect(await runDurableObjectAlarm(stub)).toBe(true);
     await runInDurableObject(stub, async (_instance: ShowDO, state) => {
       expect(state.storage.sql.exec<{ state: string }>("SELECT state FROM publication_outcomes WHERE target = ?", firstLater).one().state).toBe("failed");
       expect(await state.storage.getAlarm()).toBe(secondAt);
     });
-    failedCopy = "";
+    await copier.setFailure("");
     clock.mockReturnValue(secondAt + 1);
     expect(await runDurableObjectAlarm(stub)).toBe(true);
     const lastFeed = await (await env.DELIVERY_BUCKET.get(`${showId}/feed.xml`))!.text();
     expect(lastFeed).not.toContain(firstGuid);
     expect(lastFeed).toContain(secondGuid);
-    expect(copied.filter(path => path.includes(`/${firstLater}/audio.mp3`))).toHaveLength(1);
+    expect((await copier.history()).filter(path => path.includes(`/${firstLater}/audio.mp3`))).toHaveLength(1);
     await runInDurableObject(stub, (_instance: ShowDO, state) => {
       const outcome = JSON.parse(state.storage.sql.exec<{ record_json: string }>("SELECT record_json FROM publication_outcomes WHERE target = ?", secondLater).one().record_json);
       outcome.state = "failed";
       state.storage.sql.exec("UPDATE publication_outcomes SET state = 'failed', record_json = ? WHERE target = ?", JSON.stringify(outcome), secondLater);
     });
-    const copiedBeforeRecovery = [...copied];
+    const copiedBeforeRecovery = await copier.history();
     const recoverEpisode = await SELF.fetch(`https://example.test/v1/shows/${showId}/recover`, { method: "POST", headers,
       body: JSON.stringify({ protocol_version: 1, operation_id: crypto.randomUUID(), expected_revision: 10, episode_id: firstLater }) });
     expect(await recoverEpisode.json()).toMatchObject({ delivery: "applied" });
     const recoveredFeed = await (await env.DELIVERY_BUCKET.get(`${showId}/feed.xml`))!.text();
     expect(recoveredFeed).toContain(firstGuid);
     expect(recoveredFeed).toContain(secondGuid);
-    expect(copied.slice(copiedBeforeRecovery.length)).toEqual([expect.stringContaining(`/${firstLater}/audio.mp3`)]);
+    expect((await copier.history()).slice(copiedBeforeRecovery.length)).toEqual([expect.stringContaining(`/${firstLater}/audio.mp3`)]);
     await runInDurableObject(stub, (_instance: ShowDO, state) => {
       expect(state.storage.sql.exec<{ state: string }>("SELECT state FROM publication_outcomes WHERE target = ?", firstLater).one().state).toBe("applied");
       expect(state.storage.sql.exec<{ state: string }>("SELECT state FROM publication_outcomes WHERE target = ?", secondLater).one().state).toBe("failed");
@@ -415,15 +407,15 @@ test("accepted show and audio changes invoke the publication executor through th
     const preview = await SELF.fetch(`https://example.test/v1/shows/${showId}/restore-resume`, { headers });
     expect(await preview.json()).toMatchObject({ state: "ready", revision: 21, episodes: expect.arrayContaining([
       expect.objectContaining({ id: firstLater, state: "eligible" }), expect.objectContaining({ id: reservedId, state: "scheduled", at: reservedAt })]) });
-    const copiesBeforeResume = copied.length;
+    const copiesBeforeResume = (await copier.history()).length;
     const resumeId = crypto.randomUUID();
     const resumeRequest = { protocol_version: 1, operation_id: resumeId, expected_revision: 21, confirmed: true };
     const resume = await SELF.fetch(`https://example.test/v1/shows/${showId}/restore-resume`, { method: "POST", headers, body: JSON.stringify(resumeRequest) });
     expect(await resume.json()).toMatchObject({ acceptance: "accepted", accepted_revision: 22, delivery: "scheduled" });
-    expect(copied.slice(copiesBeforeResume)).toEqual(expect.arrayContaining([expect.stringContaining(`/${firstLater}/audio.mp3`), expect.stringContaining(`/${secondLater}/audio.mp3`)]));
+    expect((await copier.history()).slice(copiesBeforeResume)).toEqual(expect.arrayContaining([expect.stringContaining(`/${firstLater}/audio.mp3`), expect.stringContaining(`/${secondLater}/audio.mp3`)]));
     expect(await (await env.DELIVERY_BUCKET.get(`${showId}/feed.xml`))!.text()).toContain(firstGuid);
     await runInDurableObject(stub, async (_instance: ShowDO, state) => { expect(await state.storage.getAlarm()).toBe(reservedAt); });
     const duplicateResume = await SELF.fetch(`https://example.test/v1/shows/${showId}/restore-resume`, { method: "POST", headers, body: JSON.stringify(resumeRequest) });
     expect(await duplicateResume.json()).toMatchObject({ acceptance: "already_accepted", accepted_revision: 22 });
-  } finally { vi.restoreAllMocks(); transport.mockRestore(); }
+  } finally { vi.restoreAllMocks(); await copier.reset(); }
 });

@@ -1,0 +1,10 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "castloop-copier",
+  "main": "src/copier.ts",
+  "compatibility_date": "2026-11-04",
+  "workers_dev": false,
+  "preview_urls": false,
+  "vars": { "R2_ACCOUNT_ID": "", "R2_MANAGEMENT_BUCKET": "castloop-management", "R2_DELIVERY_BUCKET": "castloop-delivery" },
+  "secrets": { "required": ["CASTLOOP_WORKER_R2_ACCESS_KEY_ID", "CASTLOOP_WORKER_R2_SECRET_ACCESS_KEY"] }
+}

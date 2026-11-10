@@ -19,6 +19,7 @@ const feed = "/s-01234567/feed.xml";
 test("zone purge sends only allowed prefixes in batches without query strings", async () => {
   const calls: { url: string; headers: Headers; prefixes: string[] }[] = [];
   const transport = async (input: string, init: RequestInit) => {
+    expect(init.redirect).toBe("manual");
     calls.push({ url: String(input), headers: new Headers(init?.headers), prefixes: (JSON.parse(String(init?.body)) as { prefixes: string[] }).prefixes });
     return Response.json({ success: true, errors: [] });
   };
@@ -39,6 +40,7 @@ test("zone purge refuses unexpected origins and paths, and reports rejected resp
   expect(calls).toBe(0);
   await expect(purgeZonePaths(config, [feed], transport)).rejects.toThrow("not accepted");
   expect(calls).toBe(1);
+  await expect(purgeZonePaths(config, [feed], async () => new Response(null, { status: 301, headers: { location: "https://other.example" } }))).rejects.toThrow();
 });
 
 test("custom-domain preflight requires an existing cached audio object with a working range", async () => {
@@ -46,16 +48,20 @@ test("custom-domain preflight requires an existing cached audio object with a wo
   let calls = 0;
   const transport = async (_url: string, init: RequestInit) => {
     calls++;
-    if (init.method === "HEAD") return new Response(null, { headers: { "content-length": "10", "cf-cache-status": "HIT" } });
+    expect(init.redirect).toBe("manual");
+    if (init.method === "HEAD") return new Response(null, { headers: { "content-length": "10", "cf-cache-status": "DYNAMIC" } });
     expect(new Headers(init.headers).get("range")).toBe("bytes=0-0");
-    return new Response("a", { status: 206, headers: { "content-range": "bytes 0-0/10" } });
+    return new Response("a", { status: 206, headers: { "content-range": "bytes 0-0/10", "cf-cache-status": "MISS" } });
   };
   await probeCustomDelivery(config.base, config.configuredBase, path, transport);
   expect(calls).toBe(2);
   await probeCustomDelivery(config.base, `${config.configuredBase}/`, path, transport);
   expect(calls).toBe(4);
   await expect(probeCustomDelivery("https://untrusted.example", config.configuredBase, path, transport)).rejects.toThrow("Invalid");
-  await expect(probeCustomDelivery(config.base, config.configuredBase, path, async () => new Response(null, { headers: { "content-length": "10", "cf-cache-status": "BYPASS" } }))).rejects.toThrow("cache verification");
+  await expect(probeCustomDelivery(config.base, config.configuredBase, path, async () => new Response(null, { status: 301, headers: { location: "https://other.example" } }))).rejects.toThrow("HEAD verification");
+  await expect(probeCustomDelivery(config.base, config.configuredBase, path, async (_url, init) => init.method === "HEAD"
+    ? new Response(null, { headers: { "content-length": "10" } })
+    : new Response("a", { status: 206, headers: { "content-range": "bytes 0-0/10", "cf-cache-status": "BYPASS" } }))).rejects.toThrow("range verification");
   expect(calls).toBe(4);
   for (const body of [null, "ab"]) {
     await expect(probeCustomDelivery(config.base, config.configuredBase, path, async (_url, init) => init.method === "HEAD"

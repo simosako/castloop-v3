@@ -10,8 +10,8 @@
     "R2_ACCOUNT_ID": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "R2_MANAGEMENT_BUCKET": "test-bucket",
     "R2_DELIVERY_BUCKET": "test-delivery",
-    "R2_COPY_ACCESS_KEY_ID": "local-test",
-    "R2_COPY_SECRET_ACCESS_KEY": "local-test",
+    "CASTLOOP_WORKER_R2_ACCESS_KEY_ID": "local-test",
+    "CASTLOOP_WORKER_R2_SECRET_ACCESS_KEY": "local-test",
     "EMAIL_FROM": "",
     "EMAIL_TO": ""
   },
@@ -21,7 +21,8 @@
   ],
   "services": [
     { "binding": "DELIVERY_SERVICE", "service": "castloop-local-integration-delivery" },
-    { "binding": "NOTIFIER", "service": "castloop-local-integration-management", "entrypoint": "Notifier" }
+    { "binding": "NOTIFIER", "service": "castloop-local-integration-management", "entrypoint": "Notifier" },
+    { "binding": "COPIER", "service": "castloop-local-integration-management", "entrypoint": "LocalCopier" }
   ],
   "send_email": [{ "name": "EMAIL" }],
   "durable_objects": { "bindings": [{ "name": "SHOWS", "class_name": "ShowDO" }] },

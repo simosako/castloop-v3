@@ -99,28 +99,34 @@ export async function checkShow(storage: DurableObjectStorage, bucket: R2Bucket,
         } catch { cover = null; issues.push({ code: "dependency_unavailable", path: "show.artwork", message: "Selected cover is unavailable or changed", severity: "error" }); }
       }
       for (const item of checkShowReadiness(show, cover?.facts)) issues.push({ code: "publication_invalid", path: `show.${item.path}`, message: item.message, severity: "error" });
-      for (const row of captured.episodes) {
-        const record = JSON.parse(row.record_json) as EpisodeRecord;
-        if (record.episode_id !== row.episode_id || record.guid !== row.guid) throw new IdentityConflict("Episode record identity is inconsistent");
-        if (record.deleted) continue;
-        const previousOperation = record.metadata.key.split("/")[3];
-        if (!previousOperation) { issues.push({ code: "dependency_unavailable", path: `episodes.${row.episode_id}.metadata`, message: "Selected episode metadata is invalid", severity: "error" }); continue; }
-        let episode: ReturnType<typeof episodeSchema.parse>;
-        try { episode = episodeSchema.parse(parseToml(await readMetadataSource(bucket, record.metadata, { kind: "episode_toml", showId, episodeId: row.episode_id, operationId: previousOperation }))); }
-        catch { issues.push({ code: "dependency_unavailable", path: `episodes.${row.episode_id}.metadata`, message: "Selected episode metadata is unavailable or invalid", severity: "error" }); continue; }
-        let audio = record.audio;
-        if (audio) {
-          try {
-            const head = await bucket.head(audio.ref.key);
-            if (!head || head.httpEtag !== audio.ref.etag || head.size !== audio.ref.size || !mediaDigestMatches("audio", audio.ref, head)) throw new Error();
-          } catch { audio = null; issues.push({ code: "dependency_unavailable", path: `episodes.${row.episode_id}.audio`, message: "Selected audio is unavailable or changed", severity: "error" }); }
-        }
-        const timezone = episode.timezone ?? record.time?.timezone ?? show.timezone;
-        const signature = episode.published_at && timezone ? canonicalJson({ published_at: String(episode.published_at), timezone }) : null;
-        const audioFacts = audio ? { mime: audio.facts.mime, durationMs: audio.facts.duration_ms, size: audio.ref.size } : undefined;
-        for (const item of checkEpisodeReadiness({ ...episode, ...(timezone ? { timezone } : {}) }, show, audioFacts, { acceptedTimeMatches: !!signature && record.time?.input_signature === signature })) {
-          issues.push({ code: "publication_invalid", path: `episodes.${row.episode_id}.${item.path}`, message: item.message, severity: "error" });
-        }
+      // Bound concurrent R2 reads and retain the SQL order in the report.
+      for (let offset = 0; offset < captured.episodes.length; offset += 8) {
+        const episodeIssues = await Promise.all(captured.episodes.slice(offset, offset + 8).map(async row => {
+          const issues: MutationIssue[] = [];
+          const record = JSON.parse(row.record_json) as EpisodeRecord;
+          if (record.episode_id !== row.episode_id || record.guid !== row.guid) throw new IdentityConflict("Episode record identity is inconsistent");
+          if (record.deleted) return issues;
+          const previousOperation = record.metadata.key.split("/")[3];
+          if (!previousOperation) { issues.push({ code: "dependency_unavailable", path: `episodes.${row.episode_id}.metadata`, message: "Selected episode metadata is invalid", severity: "error" }); return issues; }
+          let episode: ReturnType<typeof episodeSchema.parse>;
+          try { episode = episodeSchema.parse(parseToml(await readMetadataSource(bucket, record.metadata, { kind: "episode_toml", showId, episodeId: row.episode_id, operationId: previousOperation }))); }
+          catch { issues.push({ code: "dependency_unavailable", path: `episodes.${row.episode_id}.metadata`, message: "Selected episode metadata is unavailable or invalid", severity: "error" }); return issues; }
+          let audio = record.audio;
+          if (audio) {
+            try {
+              const head = await bucket.head(audio.ref.key);
+              if (!head || head.httpEtag !== audio.ref.etag || head.size !== audio.ref.size || !mediaDigestMatches("audio", audio.ref, head)) throw new Error();
+            } catch { audio = null; issues.push({ code: "dependency_unavailable", path: `episodes.${row.episode_id}.audio`, message: "Selected audio is unavailable or changed", severity: "error" }); }
+          }
+          const timezone = episode.timezone ?? record.time?.timezone ?? show.timezone;
+          const signature = episode.published_at && timezone ? canonicalJson({ published_at: String(episode.published_at), timezone }) : null;
+          const audioFacts = audio ? { mime: audio.facts.mime, durationMs: audio.facts.duration_ms, size: audio.ref.size } : undefined;
+          for (const item of checkEpisodeReadiness({ ...episode, ...(timezone ? { timezone } : {}) }, show, audioFacts, { acceptedTimeMatches: !!signature && record.time?.input_signature === signature })) {
+            issues.push({ code: "publication_invalid", path: `episodes.${row.episode_id}.${item.path}`, message: item.message, severity: "error" });
+          }
+          return issues;
+        }));
+        issues.push(...episodeIssues.flat());
       }
     }
   }

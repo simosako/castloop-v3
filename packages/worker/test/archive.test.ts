@@ -6,6 +6,7 @@ import { canonicalJson, parseToml } from "@castloop/domain";
 import type { ShowDO } from "../src";
 import { prepareCandidate } from "../src/candidate";
 import { applyCandidate } from "../src/publication";
+import { checkShow } from "../src/show";
 
 test("builds complete 100-, 1000- and 2000-episode candidates from SQLite and bounded object reads", async () => {
   const showId = "s-fghjkmnp", op = "12345678-1234-4234-8234-123456789abc";
@@ -48,6 +49,40 @@ test("builds complete 100-, 1000- and 2000-episode candidates from SQLite and bo
       sql.exec("INSERT INTO episodes VALUES (?, ?, ?)", id, guid, JSON.stringify(record));
       sql.exec("INSERT INTO publication_outcomes VALUES (?, 'pending', ?)", id, JSON.stringify({ target: id, state: "pending", desired_identity: `identity-${index}` }));
       if (index === 99 || index === 999 || index === 1999) {
+        if (index === 99) {
+          const first = `${showId}/e-00000000/_versions/${op}/episode.toml`;
+          const second = `${showId}/e-00000001/_versions/${op}/episode.toml`;
+          const savedFirst = objects.get(first)!, savedSecond = objects.get(second)!;
+          objects.delete(first); objects.delete(second);
+          let active = 0, maxActive = 0;
+          const observed = {
+            head: (key: string) => bucket.head(key),
+            async get(key: string) {
+              active++; maxActive = Math.max(active, maxActive);
+              try { await Promise.resolve(); return await bucket.get(key); }
+              finally { active--; }
+            },
+          } as unknown as R2Bucket;
+          try {
+            const checked = await checkShow(state.storage, observed, showId);
+            expect(checked.issues.map(issue => issue.path)).toEqual(["episodes.e-00000000.metadata", "episodes.e-00000001.metadata"]);
+            expect(maxActive).toBeGreaterThan(1);
+            expect(maxActive).toBeLessThanOrEqual(8);
+          } finally { objects.set(first, savedFirst); objects.set(second, savedSecond); }
+          let changed = false;
+          const changing = {
+            head: (key: string) => bucket.head(key),
+            async get(key: string) {
+              if (key === first && !changed) {
+                changed = true;
+                sql.exec("UPDATE show_control SET revision = 2, record_json = ? WHERE singleton = 1", JSON.stringify({ ...control, revision: 2 }));
+              }
+              return bucket.get(key);
+            },
+          } as unknown as R2Bucket;
+          try { await expect(checkShow(state.storage, changing, showId)).rejects.toThrow("Show changed during check"); }
+          finally { sql.exec("UPDATE show_control SET revision = 1, record_json = ? WHERE singleton = 1", JSON.stringify(control)); }
+        }
         gets = 0; heads = 0;
         const start = performance.now();
         const candidate = await prepareCandidate(state.storage, bucket, showId, Date.now());
@@ -63,12 +98,24 @@ test("builds complete 100-, 1000- and 2000-episode candidates from SQLite and bo
           expect(sql.exec<{ count: number }>("SELECT COUNT(*) AS count FROM source_pins").one().count).toBe(2 * (index + 1) + 2);
           let copies = 0;
           const purges: string[][] = [];
-          const result = await applyCandidate(state.storage, delivery, showId, candidate, async () => { copies++; }, async paths => { purges.push(paths); });
-          expect(result).toBe("applied");
-          expect(copies).toBe(index === 99 ? 101 : index === 999 ? 900 : 1000);
-          expect(purges).toEqual([[`/${showId}/`], [`/${showId}/feed.xml`]]);
-          expect(delivered.get(`${showId}/feed.xml`)).toBe(candidate.feed);
-          expect(sql.exec<{ count: number }>("SELECT COUNT(*) AS count FROM delivery_refs").one().count).toBe(index + 2);
+          const groups: number[] = [];
+          const result = index === 999 ? "not applied" : await applyCandidate(state.storage, delivery, showId, candidate, async () => { throw new Error("Unexpected direct copy"); }, async paths => { purges.push(paths); }, "acceptance", async items => { groups.push(items.length); copies += items.length; });
+          if (index === 99) {
+            expect(result).toBe("applied");
+            expect(copies).toBe(101);
+            expect(groups).toEqual([...Array(25).fill(4), 1]);
+            expect(purges).toEqual([[`/${showId}/`], [`/${showId}/feed.xml`]]);
+            expect(delivered.get(`${showId}/feed.xml`)).toBe(candidate.feed);
+            expect(sql.exec<{ count: number }>("SELECT COUNT(*) AS count FROM delivery_refs").one().count).toBe(index + 2);
+          } else if (index === 1999) {
+            expect(result).toBe("failed");
+            expect(copies).toBe(0);
+            expect(groups).toEqual([]);
+            expect(purges).toEqual([]);
+            expect(sql.exec<{ count: number }>("SELECT COUNT(*) AS count FROM delivery_refs").one().count).toBe(101);
+          } else {
+            expect(result).toBe("not applied");
+          }
           const rows = {
             episodes: sql.exec<{ count: number }>("SELECT COUNT(*) AS count FROM episodes").one().count,
             source_assets: sql.exec<{ count: number }>("SELECT COUNT(*) AS count FROM source_assets").one().count,

@@ -1,6 +1,7 @@
 import { canonicalJson, showIdPattern, type ObjectRef } from "@castloop/domain";
 import { IdentityConflict, nextScheduledAlarm, readShowControl } from "./storage";
 import type { FeedSnapshot, PublicationCandidate } from "./candidate";
+import { COPY_GROUP_SIZE, MAX_PUBLICATION_COPIES, type CopyItem } from "./copy-contract";
 
 interface WithdrawalOutcome {
   record_version: 1; target: "show-withdrawal"; desired_identity: string; applied_identity: string | null;
@@ -101,7 +102,8 @@ type CopyMedia = (source: ObjectRef, target: string, mime: "audio/mpeg" | "image
 
 /** Apply one already captured candidate. No automatic drain or retry occurs. */
 export async function applyCandidate(storage: DurableObjectStorage, bucket: R2Bucket, showId: string, candidate: ReadyCandidate, copy: CopyMedia,
-  purge: (paths: string[]) => Promise<void>, trigger: "acceptance" | "alarm" | "recover" = "acceptance"): Promise<"applied" | "failed" | "pending"> {
+  purge: (paths: string[]) => Promise<void>, trigger: "acceptance" | "alarm" | "recover" = "acceptance",
+  copyGroup?: (items: CopyItem[]) => Promise<void>): Promise<"applied" | "failed" | "pending"> {
   const eligible = candidate.episodes.filter(item => item.state === "eligible");
   const encoded = canonicalJson({ version: 1, show: candidate.snapshot?.show ?? candidate.control.metadata, cover: candidate.cover, base: candidate.snapshot?.base ?? candidate.control.current_delivery.base,
     episodes: candidate.snapshot?.episodes.map(item => ({ id: item.id, identity: item.identity })) ?? eligible.map(item => ({ id: item.id, identity: item.desiredIdentity })) });
@@ -155,10 +157,25 @@ export async function applyCandidate(storage: DurableObjectStorage, bucket: R2Bu
   const mediaPaths: string[] = [];
   const touchedEpisodes = new Set<string>(before.unresolvedEligible);
   try {
-    if ((!candidate.snapshot || canonicalJson(candidate.snapshot.show) === canonicalJson(candidate.control.metadata)) && ((!candidate.targeted && trigger === "recover" && before.recoverCover) || !previousFeed?.public_paths.includes(coverPath))) {
+    const needsCover = (!candidate.snapshot || canonicalJson(candidate.snapshot.show) === canonicalJson(candidate.control.metadata)) && ((!candidate.targeted && trigger === "recover" && before.recoverCover) || !previousFeed?.public_paths.includes(coverPath));
+    const needsAudio = (item: typeof candidate.episodes[number]) => item.state === "eligible" &&
+      ((trigger === "recover" && (candidate.targeted || before.unresolvedEligible.has(item.id))) || !before.refs.get(item.id)?.sources.some(ref => canonicalJson(ref) === canonicalJson(item.audio)));
+    if (Number(needsCover) + candidate.episodes.filter(needsAudio).length > MAX_PUBLICATION_COPIES) throw new Error(`Publication exceeds the current limit of ${MAX_PUBLICATION_COPIES} media copies per attempt`);
+    let group: CopyItem[] = [];
+    const flush = async () => {
+      if (!group.length) return;
+      const current = group; group = [];
+      // A failed group does not identify which member failed; all touched
+      // eligible episodes remain incomplete, while reservations stay intact.
+      target = "feed";
+      if (copyGroup) await copyGroup(current);
+      else for (const item of current) await copy(item.source, item.path, item.mime);
+    };
+    const queue = async (item: CopyItem) => { group.push(item); if (group.length === COPY_GROUP_SIZE) await flush(); };
+    if (needsCover) {
       await bucket.delete(candidate.coverPath);
       const mime = candidate.coverPath.endsWith(".png") ? "image/png" as const : "image/jpeg" as const;
-      await copy(candidate.cover, candidate.coverPath, mime);
+      await queue({ source: candidate.cover, path: candidate.coverPath, mime });
       mediaPaths.push(coverPath);
     }
     for (const item of candidate.episodes) {
@@ -167,11 +184,10 @@ export async function applyCandidate(storage: DurableObjectStorage, bucket: R2Bu
       const previous = before.refs.get(item.id);
       if (item.state === "eligible") {
         if (!item.audio || !item.metadata) throw new IdentityConflict("Eligible episode has no selected source");
-        const unchanged = previous?.sources.some(ref => canonicalJson(ref) === canonicalJson(item.audio));
-        if ((trigger === "recover" && (candidate.targeted || before.unresolvedEligible.has(item.id))) || !unchanged) {
+        if (needsAudio(item)) {
           touchedEpisodes.add(item.id);
           await bucket.delete(path.slice(1));
-          await copy(item.audio, path.slice(1), "audio/mpeg");
+          await queue({ source: item.audio, path: path.slice(1), mime: "audio/mpeg" });
           mediaPaths.push(path);
         }
       } else if (trigger === "recover" || previous || before.unresolvedWithdrawal.has(item.id)) {
@@ -183,6 +199,7 @@ export async function applyCandidate(storage: DurableObjectStorage, bucket: R2Bu
         mediaPaths.push(path);
       }
     }
+    await flush();
     target = "feed";
     // A large restore or recovery can affect hundreds of objects. Purging the
     // Show prefix bounds API calls while remaining isolated from other Shows.
@@ -215,7 +232,7 @@ export async function applyCandidate(storage: DurableObjectStorage, bucket: R2Bu
     feedOutcome.attempt_revision = candidate.revision;
     feedOutcome.trigger = trigger;
     feedOutcome.state = failure ? "failed" : "applied";
-    feedOutcome.error = failure ? { code: "delivery_failed", message: "Feed publication did not complete", operation_id: control.last_receipt?.operation_id ?? null, at: now } : null;
+    feedOutcome.error = failure ? { code: "delivery_failed", message: failure.message.startsWith("Publication exceeds the current limit of ") ? failure.message : "Feed publication did not complete", operation_id: control.last_receipt?.operation_id ?? null, at: now } : null;
     feedOutcome.notification = failure ? "unconfigured" : null;
     if (!failure) feedOutcome.applied_identity = feedIdentity;
     storage.sql.exec("UPDATE publication_outcomes SET state = ?, record_json = ? WHERE target = 'feed'", feedOutcome.state, JSON.stringify(feedOutcome));
@@ -225,7 +242,7 @@ export async function applyCandidate(storage: DurableObjectStorage, bucket: R2Bu
       if (failure) {
         // A different episode's copy/delete failure must not cancel a future
         // reservation merely because this batch inspected its public path.
-        if (item.state === "scheduled" && failure.target.startsWith("e-") && failure.target !== item.id) continue;
+        if (item.state === "scheduled" && failure.target !== item.id) continue;
         if (failure.target !== item.id && !touchedEpisodes.has(item.id)) continue;
         outcome.state = "failed";
         outcome.attempt_revision = candidate.revision;
@@ -282,7 +299,7 @@ export async function applyCandidate(storage: DurableObjectStorage, bucket: R2Bu
     // before this batch finishes. Its scheduled entry was not published by
     // this batch, so arrange a fresh alarm instead of dropping it as overdue.
     if (control.scheduling?.enabled && candidate.episodes.some(item => item.state === "scheduled" && item.at !== undefined && item.at <= now &&
-      (!failure || (failure.target.startsWith("e-") && failure.target !== item.id)))) {
+      (!failure || failure.target !== item.id))) {
       const recheck = now + 1000;
       nextAlarm = nextAlarm === null ? recheck : Math.min(nextAlarm, recheck);
     }

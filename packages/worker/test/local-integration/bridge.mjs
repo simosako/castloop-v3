@@ -1,7 +1,18 @@
 // Test-only S3 subset. Wrangler's local R2 has no S3 endpoint; requests here
 // operate on the same local binding used by the unmodified management Worker.
 import management, { Notifier, Routing, ShowDO as RealShowDO } from "../../src/index.ts";
+import { WorkerEntrypoint } from "cloudflare:workers";
 export { Notifier, Routing };
+export class LocalCopier extends WorkerEntrypoint {
+  async copy(items) {
+    if (!items.length || items.length > 4) throw new Error("Invalid copy group");
+    for (const item of items) {
+      const source = await this.env.MANAGEMENT_BUCKET.get(item.source.key);
+      if (!source || source.httpEtag !== item.source.etag) throw new Error("Source changed");
+      await this.env.DELIVERY_BUCKET.put(item.path, source.body, { httpMetadata: { contentType: item.mime, cacheControl: "public, max-age=0, s-maxage=2592000, must-revalidate" } });
+    }
+  }
+}
 let loseCompletionResponse = false;
 let loseClaimResponse = false;
 let loseOperationResponse = false;

@@ -91,7 +91,7 @@ test("push rejects any malformed TOML before uploading or normalizing another Sh
       `schema_version = 1\nid = "${episode}"\nshow_id = "${second}"\npublish = "true"\n`]) {
       await writeFile(file, body);
       const child = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "push"], { cwd: root, stdout: "pipe", stderr: "pipe",
-        env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" } });
+        env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" } });
       const [code, error] = await Promise.all([child.exited, new Response(child.stderr).text()]);
       expect(code).toBe(2);
       expect(error).toContain("episode.toml");
@@ -100,7 +100,7 @@ test("push rejects any malformed TOML before uploading or normalizing another Sh
       expect(await readFile(firstShow, "utf8")).toBe(initial);
     }
     const json = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "push", "--json"], { cwd: root, stdout: "pipe", stderr: "pipe",
-      env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" } });
+      env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" } });
     const [jsonCode, jsonOut, jsonErr] = await Promise.all([json.exited, new Response(json.stdout).text(), new Response(json.stderr).text()]);
     expect(jsonCode).toBe(2);
     expect(jsonErr).toBe("");
@@ -139,7 +139,7 @@ test("standalone push retains and replays the exact intent after an uncertain re
     await setConfigValue(root, "account_id", "a".repeat(32));
     await setConfigValue(root, "management_bucket", "test-bucket");
     const binary = resolve(import.meta.dir, "../../../dist/castloop");
-    const environment = { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" };
+    const environment = { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" };
     async function run(...args: string[]) {
       const process = Bun.spawn([binary, ...args], { cwd: root, stdout: "pipe", stderr: "pipe", env: environment });
       const [code, output, error] = await Promise.all([process.exited, new Response(process.stdout).text(), new Response(process.stderr).text()]);
@@ -236,7 +236,7 @@ test.skipIf(process.platform === "win32" || process.getuid?.() === 0)("preserves
     const showId = await newShow(root); targetId = showId;
     for (const [key, value] of [["management_url", server.url.origin], ["r2_endpoint", server.url.origin], ["account_id", "a".repeat(32)], ["management_bucket", "test-bucket"]]) await setConfigValue(root, key!, value!);
     async function run(...args: string[]) {
-      const child = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "push", "--show", showId, ...args], { cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" } });
+      const child = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "push", "--show", showId, ...args], { cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" } });
       const [code, output, error] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
       return { code, output, error };
     }
@@ -279,7 +279,7 @@ test("reports accepted metadata when a subsequent local baseline update fails", 
     const showId = await newShow(root), originalState = await readFile(statePath, "utf8");
     for (const [key, value] of [["management_url", server.url.origin], ["r2_endpoint", server.url.origin], ["account_id", "a".repeat(32)], ["management_bucket", "test-bucket"]]) await setConfigValue(root, key!, value!);
     async function run(...args: string[]) {
-      const child = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), ...args], { cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" } });
+      const child = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), ...args], { cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" } });
       const [code, output, error] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
       return { code, output, error };
     }
@@ -333,7 +333,7 @@ test("standalone pull connects to local management and S3 endpoints without down
     await setConfigValue(root, "account_id", "a".repeat(32));
     await setConfigValue(root, "management_bucket", "test-bucket");
     const process = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "pull", "--show", showId], {
-      cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" },
+      cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" },
     });
     const [code, output, error] = await Promise.all([process.exited, new Response(process.stdout).text(), new Response(process.stderr).text()]);
     expect({ code, error }).toEqual({ code: 0, error: "" });
@@ -342,7 +342,7 @@ test("standalone pull connects to local management and S3 endpoints without down
     expect(s3Requests).toBe(1);
     async function runJson() {
       const child = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "pull", "--show", showId, "--json"], {
-        cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" },
+        cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" },
       });
       const [code, output, error] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
       return { code, result: JSON.parse(output), error };
@@ -387,7 +387,7 @@ test("standalone push normalizes a new episode and sends a single metadata batch
     const original = await readFile(episodePath, "utf8");
     for (const [key, value] of [["management_url", server.url.origin], ["r2_endpoint", server.url.origin], ["account_id", "a".repeat(32)], ["management_bucket", "test-bucket"]]) await setConfigValue(root, key!, value!);
     const process = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "push", "--show", showId, "--json"], { cwd: root, stdout: "pipe", stderr: "pipe",
-      env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" } });
+      env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" } });
     const [code, error, output] = await Promise.all([process.exited, new Response(process.stderr).text(), new Response(process.stdout).text()]);
     expect({ code, error }).toEqual({ code: 1, error: "" });
     expect(JSON.parse(output)).toMatchObject({ version: 1, exit_code: 1, shows: [{ show_id: showId, result: { acceptance: "accepted", accepted_revision: 2, delivery: "pending" } }],
@@ -429,7 +429,7 @@ test("push regenerates only a confirmed new Episode collision and preserves loca
     const episode = await newEpisode(root, show);
     await writeFile(join(root, show, episode, "audio.mp3"), "audio retained");
     for (const [key, value] of [["management_url", server.url.origin], ["r2_endpoint", server.url.origin], ["account_id", "a".repeat(32)], ["management_bucket", "test-bucket"]]) await setConfigValue(root, key!, value!);
-    const child = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "push", "--show", show, "--json"], { cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" } });
+    const child = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "push", "--show", show, "--json"], { cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" } });
     const [code, output, error] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
     expect({ code, error }).toEqual({ code: 0, error: "" });
     expect(sent).toHaveLength(2);
@@ -513,7 +513,7 @@ test("push verifies an occupied Show ID and retries with a new ID and updated Ep
     const episode = await newEpisode(root, oldShow);
     await writeFile(join(root, oldShow, episode, "local.mp3"), "audio");
     for (const [key, value] of [["management_url", server.url.origin], ["r2_endpoint", server.url.origin], ["account_id", "a".repeat(32)], ["management_bucket", "test-bucket"]]) await setConfigValue(root, key!, value!);
-    const child = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "push", "--show", oldShow, "--json"], { cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" } });
+    const child = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "push", "--show", oldShow, "--json"], { cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" } });
     const [code, output, error] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
     expect({ code, error }).toEqual({ code: 0, error: "" });
     expect(sent).toHaveLength(2);
@@ -610,7 +610,7 @@ test("standalone cover upload validates and selects the accepted logical filenam
     await writeFile(path, PNG.sync.write(image, { colorType: 2 }));
     for (const [key, value] of [["management_url", server.url.origin], ["r2_endpoint", server.url.origin], ["account_id", "a".repeat(32)], ["management_bucket", "test-bucket"]]) await setConfigValue(root, key!, value!);
     const process = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "show", "upload-cover", showId, path, "--json"], { cwd: root, stdout: "pipe", stderr: "pipe",
-      env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" } });
+      env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" } });
     const [code, output, error] = await Promise.all([process.exited, new Response(process.stdout).text(), new Response(process.stderr).text()]);
     expect({ code, error }).toEqual({ code: 1, error: "" });
     expect(JSON.parse(output)).toMatchObject({ version: 1, show_id: showId, exit_code: 1, result: { acceptance: "accepted", accepted_revision: 2, delivery: "pending" } });
@@ -618,7 +618,7 @@ test("standalone cover upload validates and selects the accepted logical filenam
     expect(submitted?.payload.cover.key).toMatch(/\/cover\.png$/);
     uncertain = true;
     const retry = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "show", "upload-cover", showId, path, "--json"], { cwd: root, stdout: "pipe", stderr: "pipe",
-      env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" } });
+      env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" } });
     const [retryCode, retryOut, retryErr] = await Promise.all([retry.exited, new Response(retry.stdout).text(), new Response(retry.stderr).text()]);
     expect(retryCode).toBe(1);
     expect(retryErr).toBe("");
@@ -734,7 +734,7 @@ test("standalone audio upload validates show and sends checksum-bound media dire
     const file = resolve(import.meta.dir, "fixture.mp3");
     async function run(json = false) {
       const process = Bun.spawn([binary, "episode", "upload-audio", showId, episodeId, file, ...(json ? ["--json"] : [])], { cwd: root, stdout: "pipe", stderr: "pipe",
-        env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" } });
+        env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" } });
       const [code, output, error] = await Promise.all([process.exited, new Response(process.stdout).text(), new Response(process.stderr).text()]);
       return { code, output, error };
     }
@@ -777,7 +777,7 @@ test.skipIf(process.platform === "win32")("standalone audio upload reports SIGIN
     const fixture = await readFile(resolve(import.meta.dir, "fixture.mp3"));
     const bytes = Buffer.alloc(17 * 1024 * 1024); fixture.copy(bytes);
     const path = join(root, "audio.mp3"); await writeFile(path, bytes);
-    const child = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "episode", "upload-audio", show, episode, path, "--json"], { cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" } });
+    const child = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "episode", "upload-audio", show, episode, path, "--json"], { cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" } });
     sendSignal = () => { child.kill("SIGINT"); };
     const [code, output, error] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
     expect(signalled).toBe(true);
@@ -812,13 +812,13 @@ test("standalone inventory discovers, registers and displays source records and 
     await initWorkspace(root);
     for (const [name, value] of [["management_url", server.url.origin], ["r2_endpoint", server.url.origin], ["account_id", "a".repeat(32)], ["management_bucket", "test-bucket"]]) await setConfigValue(root, name!, value!);
     const process = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "inventory", "--show", showId], { cwd: root, stdout: "pipe", stderr: "pipe",
-      env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" } });
+      env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" } });
     const [code, output, error] = await Promise.all([process.exited, new Response(process.stdout).text(), new Response(process.stderr).text()]);
     expect({ code, error }).toEqual({ code: 0, error: "" });
     expect(registered).toBe(true);
     expect(output).toContain(`delete_claimed 7 show_toml ${key} claim=${operationId}`);
     const child = Bun.spawn([resolve(import.meta.dir, "../../../dist/castloop"), "inventory", "--show", showId, "--json"], { cwd: root, stdout: "pipe", stderr: "pipe",
-      env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" } });
+      env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" } });
     const [jsonCode, jsonOutput, jsonError] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
     expect({ code: jsonCode, error: jsonError }).toEqual({ code: 0, error: "" });
     expect(JSON.parse(jsonOutput)).toMatchObject({ version: 1, exit_code: 0, shows: [{ show_id: showId, issues: [], records: [{ ref, state: "delete_claimed", claim_operation_id: operationId }] }] });
@@ -930,7 +930,7 @@ test("restore previews a stopped target and replays the same staged request afte
     await writeFile(path, JSON.stringify({ format_version: 1, created_at: 1, installation: { management_origin: server.url.origin, management_bucket: "source-bucket", delivery_bucket: "delivery-bucket" }, shows: [snapshot] }));
     const binary = resolve(import.meta.dir, "../../../dist/castloop");
     async function run(...args: string[]) {
-      const process = Bun.spawn([binary, ...args], { cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" } });
+      const process = Bun.spawn([binary, ...args], { cwd: root, stdout: "pipe", stderr: "pipe", env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" } });
       const [code, output, error] = await Promise.all([process.exited, new Response(process.stdout).text(), new Response(process.stderr).text()]);
       return { code, output, error };
     }
@@ -1025,7 +1025,7 @@ test("cleanup previews, requires confirmation, and resumes an uncertain claimed 
     const binary = resolve(import.meta.dir, "../../../dist/castloop");
     async function run(...extra: string[]) {
       const process = Bun.spawn([binary, "cleanup", "--show", showId, "--older-than", "2", ...extra], { cwd: root, stdout: "pipe", stderr: "pipe",
-        env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_R2_ACCESS_KEY_ID: "test", CASTLOOP_R2_SECRET_ACCESS_KEY: "test" } });
+        env: { ...Bun.env, XDG_CONFIG_HOME: join(root, "config"), CASTLOOP_ADMIN_TOKEN: "admin-test", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "test" } });
       const [code, output, error] = await Promise.all([process.exited, new Response(process.stdout).text(), new Response(process.stderr).text()]);
       return { code, output, error };
     }

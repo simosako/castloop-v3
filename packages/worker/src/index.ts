@@ -5,7 +5,7 @@ import { commitAcceptance, CreationCollision, IdentityConflict, initializeSchema
 import { acceptShowMetadata, checkShow, UnsupportedOperation, ValidationFailure } from "./show";
 import { applyCandidate, hasCurrentWithdrawal, stoppedWithdrawalIdentity, withdrawDeletedShow } from "./publication";
 import { prepareCandidate } from "./candidate";
-import { copyMediaObject, SourceIdentityError, SourceMetadataError } from "./objects";
+import { SourceIdentityError, SourceMetadataError } from "./objects";
 import { claimCleanup, completeCleanupKeys } from "./cleanup";
 import { readInventory, registerInventory } from "./inventory";
 import { exportShow } from "./export";
@@ -265,7 +265,10 @@ export class ShowDO extends DurableObject<Env> {
           await probeCustomDelivery(target, this.env.CUSTOM_DELIVERY_BASE, audio);
           const token = (this.env as Env & { ZONE_PURGE_TOKEN?: string }).ZONE_PURGE_TOKEN ?? "";
           await purgeZonePaths({ base: target, configuredBase: this.env.CUSTOM_DELIVERY_BASE, zoneId: this.env.CUSTOM_ZONE_ID, token }, [`/${showId}/feed.xml`]);
-        } catch { throw new UnsupportedOperation("Custom-domain access, cache or purge preflight failed"); }
+        } catch (error) {
+          console.error(JSON.stringify({ event: "custom_delivery_preflight_failed", show_id: showId, error: error instanceof Error ? error.message : "unknown" }));
+          throw new UnsupportedOperation("Custom-domain access, cache or purge preflight failed");
+        }
       }
       return await commitAcceptance(this.ctx.storage, showId, operation, (_sql, current, revision) => {
         if (!current || current.deleted || current.restore_hold || current.revision !== candidate.revision || this.runner) throw new IdentityConflict("Show changed or publication is running");
@@ -310,7 +313,7 @@ export class ShowDO extends DurableObject<Env> {
     this.runner = running;
     try {
       const result = await running;
-      if (result === "failed") {
+      if (result === "failed" && this.env.EMAIL_FROM && this.env.EMAIL_TO) {
         // Publication may capture a newer revision after an await, and another
         // update may be accepted after it records failure. Use each persisted
         // failure's own revision instead of guessing from current Show state.
@@ -348,10 +351,8 @@ export class ShowDO extends DurableObject<Env> {
       try {
         if (candidate.state === "hold") return "blocked";
         if (candidate.state === "withdraw") return "pending";
-        const copyConfig = { accountId: this.env.R2_ACCOUNT_ID, sourceBucket: this.env.R2_MANAGEMENT_BUCKET, deliveryBucket: this.env.R2_DELIVERY_BUCKET,
-          accessKeyId: this.env.R2_COPY_ACCESS_KEY_ID, secretAccessKey: this.env.R2_COPY_SECRET_ACCESS_KEY };
         const result = await applyCandidate(this.ctx.storage, this.env.DELIVERY_BUCKET, showId, candidate,
-          (source, path, mime) => copyMediaObject(copyConfig, source, path, mime), purge, trigger);
+          async () => { throw new Error("Copy service is required"); }, purge, trigger, items => this.env.COPIER.copy(items));
         if (result === "applied" && candidate.episodes.some(item => item.state === "invalid")) return "blocked";
         return result === "applied" && candidate.nextAlarm !== null ? "scheduled" : result;
       } finally { candidate.release(); }

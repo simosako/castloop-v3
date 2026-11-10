@@ -64,7 +64,10 @@ test("a failure remains eligible for notification when a newer revision is accep
     const control = { record_version: 1, show_id: id, revision: 1, metadata: null, cover: null, deleted: false, accepted_at: 1,
       last_receipt: null, current_delivery: { base: "https://delivery.example.test", previous_base: null, migration_operation_id: null, applied_revision: 0 }, pending_delivery: null, restore_hold: false };
     state.storage.sql.exec("INSERT INTO show_control VALUES (1, ?, 1, ?)", id, JSON.stringify(control));
-    const target = instance as unknown as { publishOnce: () => Promise<"failed">; runPublication: (show: string, trigger: "acceptance") => Promise<string>; env: Env };
+    const target = instance as unknown as { publishOnce: () => Promise<"failed">; runPublication: (show: string, trigger: "acceptance") => Promise<string>; env: Omit<Env, "EMAIL_FROM" | "EMAIL_TO"> & { EMAIL_FROM: string; EMAIL_TO: string } };
+    const previousFrom = target.env.EMAIL_FROM, previousTo = target.env.EMAIL_TO;
+    target.env.EMAIL_FROM = "sender@example.com";
+    target.env.EMAIL_TO = "admin@example.com";
     const send = vi.spyOn(target.env.NOTIFIER, "send").mockResolvedValue("accepted");
     const publish = vi.spyOn(target, "publishOnce").mockImplementation(async () => {
       state.storage.sql.exec("INSERT INTO publication_outcomes VALUES ('feed', 'failed', ?)", JSON.stringify(failure()));
@@ -79,6 +82,26 @@ test("a failure remains eligible for notification when a newer revision is accep
       expect(send).toHaveBeenCalledTimes(2);
       const outcome = JSON.parse(state.storage.sql.exec<{ record_json: string }>("SELECT record_json FROM publication_outcomes WHERE target = 'feed'").one().record_json);
       expect(outcome.notification).toBe("accepted");
-    } finally { send.mockRestore(); publish.mockRestore(); }
+    } finally { send.mockRestore(); publish.mockRestore(); target.env.EMAIL_FROM = previousFrom; target.env.EMAIL_TO = previousTo; }
+  });
+});
+
+test("unconfigured email does not dispatch notification service calls", async () => {
+  const id = "s-3456789a";
+  await runInDurableObject(env.SHOWS.getByName(id), async (instance: ShowDO, state) => {
+    const target = instance as unknown as { publishOnce: () => Promise<"failed">; runPublication: (show: string, trigger: "acceptance") => Promise<string>; env: Env };
+    const previousFrom = target.env.EMAIL_FROM, previousTo = target.env.EMAIL_TO;
+    target.env.EMAIL_FROM = ""; target.env.EMAIL_TO = "";
+    const send = vi.spyOn(target.env.NOTIFIER, "send");
+    const publish = vi.spyOn(target, "publishOnce").mockImplementation(async () => {
+      state.storage.sql.exec("INSERT INTO publication_outcomes VALUES ('feed', 'failed', ?)", JSON.stringify(failure()));
+      return "failed";
+    });
+    try {
+      expect(await target.runPublication(id, "acceptance")).toBe("failed");
+      expect(send).not.toHaveBeenCalled();
+      const outcome = JSON.parse(state.storage.sql.exec<{record_json:string}>("SELECT record_json FROM publication_outcomes WHERE target = 'feed'").one().record_json);
+      expect(outcome.notification).toBe("unconfigured");
+    } finally { send.mockRestore(); publish.mockRestore(); target.env.EMAIL_FROM = previousFrom; target.env.EMAIL_TO = previousTo; }
   });
 });

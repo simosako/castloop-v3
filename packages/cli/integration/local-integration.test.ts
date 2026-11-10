@@ -14,7 +14,7 @@ test("standalone CLI syncs revisions with the real local management Worker and R
   const base = await mkdtemp(join(tmpdir(), "castloop-real-worker-"));
   const first = join(base, "first"), second = join(base, "second"), collision = join(base, "collision");
   const binary = resolve(import.meta.dir, "../../../dist/castloop");
-  const env = { ...Bun.env, XDG_CONFIG_HOME: join(base, "config"), CASTLOOP_ADMIN_TOKEN: "local-integration-token", CASTLOOP_R2_ACCESS_KEY_ID: "local-test", CASTLOOP_R2_SECRET_ACCESS_KEY: "local-test" };
+  const env = { ...Bun.env, XDG_CONFIG_HOME: join(base, "config"), CASTLOOP_ADMIN_TOKEN: "local-integration-token", CASTLOOP_CLI_R2_ACCESS_KEY_ID: "local-test", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "local-test" };
   async function run(root: string, ...args: string[]) {
     const child = Bun.spawn([binary, ...args], { cwd: root, env, stdout: "pipe", stderr: "pipe" });
     const [code, output, error] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);

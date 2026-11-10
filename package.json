@@ -7,12 +7,12 @@
     "test:domain": "bun test packages/domain/test",
     "test:cli": "bun run build:cli && bun test packages/cli/test",
     "test:workers": "vitest run --config packages/worker/vitest.config.ts && vitest run --config packages/delivery/vitest.config.ts",
-    "types:worker": "wrangler types packages/worker/worker-configuration.d.ts -c packages/worker/wrangler.jsonc -c packages/delivery/wrangler.jsonc && wrangler types packages/delivery/worker-configuration.d.ts -c packages/delivery/wrangler.jsonc -c packages/worker/wrangler.jsonc --include-runtime false --env-interface DeliveryEnv",
+    "types:worker": "wrangler types packages/worker/worker-configuration.d.ts -c packages/worker/wrangler.jsonc -c packages/delivery/wrangler.jsonc -c packages/worker/wrangler.copier.jsonc && wrangler types packages/delivery/worker-configuration.d.ts -c packages/delivery/wrangler.jsonc -c packages/worker/wrangler.jsonc --include-runtime false --env-interface DeliveryEnv",
     "typecheck": "bun run types:worker && tsc --noEmit && bun run types:packages",
     "types:packages": "tsc -p packages/domain/tsconfig.json && tsc -p packages/cli/tsconfig.json && tsc -p packages/worker/tsconfig.json && tsc -p packages/delivery/tsconfig.json",
     "build:cli": "bun build packages/cli/src/main.ts --compile --outfile dist/castloop",
     "build:release": "bun packages/cli/scripts/build.ts",
-    "verify:bundles": "wrangler deploy --dry-run -c packages/worker/wrangler.jsonc && wrangler deploy --dry-run -c packages/delivery/wrangler.jsonc",
+    "verify:bundles": "wrangler deploy --dry-run -c packages/worker/wrangler.copier.jsonc && wrangler deploy --dry-run -c packages/worker/wrangler.jsonc && wrangler deploy --dry-run -c packages/delivery/wrangler.jsonc",
     "verify:deployed": "bun scripts/deployed-smoke.ts"
   },
   "devDependencies": {

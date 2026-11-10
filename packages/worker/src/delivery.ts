@@ -22,14 +22,14 @@ export async function probeCustomDelivery(base: string, configuredBase: string, 
   if (origin.protocol !== "https:" || origin.username || origin.password || origin.pathname !== "/" || origin.search || origin.hash ||
       origin.origin !== configuredHttpsOrigin(configuredBase) || !audioPath.test(path)) throw new Error("Invalid custom-domain probe");
   const url = `${origin.origin}${path}`;
-  const head = await transport(url, { method: "HEAD", redirect: "error" });
+  const head = await transport(url, { method: "HEAD", redirect: "manual" });
   const size = Number(head.headers.get("content-length"));
-  const cache = head.headers.get("cf-cache-status")?.toUpperCase();
-  if (!head.ok || !Number.isSafeInteger(size) || size <= 0 || !cache || !["HIT", "MISS", "EXPIRED", "REVALIDATED", "UPDATING"].includes(cache)) {
-    throw new Error("Custom-domain HEAD or cache verification failed");
+  if (!head.ok || !Number.isSafeInteger(size) || size <= 0) {
+    throw new Error("Custom-domain HEAD verification failed");
   }
-  const range = await transport(url, { method: "GET", headers: { Range: "bytes=0-0" }, redirect: "error" });
-  if (range.status !== 206 || range.headers.get("content-range") !== `bytes 0-0/${size}` || !range.body) {
+  const range = await transport(url, { method: "GET", headers: { Range: "bytes=0-0" }, redirect: "manual" });
+  const cache = range.headers.get("cf-cache-status")?.toUpperCase();
+  if (range.status !== 206 || range.headers.get("content-range") !== `bytes 0-0/${size}` || !range.body || !cache || !["HIT", "MISS", "EXPIRED", "REVALIDATED", "UPDATING"].includes(cache)) {
     await range.body?.cancel();
     throw new Error("Custom-domain audio range verification failed");
   }
@@ -61,7 +61,7 @@ export async function purgeZonePaths(config: { base: string; configuredBase: str
   for (let start = 0; start < prefixes.length; start += 100) {
     const response = await transport(`https://api.cloudflare.com/client/v4/zones/${config.zoneId}/purge_cache`, {
       method: "POST", headers: { Authorization: `Bearer ${config.token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ prefixes: prefixes.slice(start, start + 100) }), redirect: "error",
+      body: JSON.stringify({ prefixes: prefixes.slice(start, start + 100) }), redirect: "manual",
     });
     if (!response.ok) throw new Error(`Custom-domain purge failed (HTTP ${response.status})`);
     let body: unknown;

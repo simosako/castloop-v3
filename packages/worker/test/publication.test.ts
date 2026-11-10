@@ -111,6 +111,44 @@ test("an unrelated audio failure does not cancel a future reservation", async ()
   });
 });
 
+test("a failed delegated group is recovered by deleting and copying every affected episode again", async () => {
+  const showId = "s-vvvv1111";
+  await runInDurableObject(env.SHOWS.getByName(showId), async (_instance, state) => {
+    seed(state, showId, false);
+    const control = JSON.parse(state.storage.sql.exec<{ record_json: string }>("SELECT record_json FROM show_control").one().record_json) as ShowControl;
+    const ref = control.metadata!, coverPath = `${showId}/covers/image.png`;
+    state.storage.sql.exec("UPDATE delivery_refs SET record_json = ? WHERE target = 'feed'", JSON.stringify({ target: "feed", sources: [ref], public_paths: [`/${showId}/feed.xml`, `/${coverPath}`] }));
+    const episodes = Array.from({ length: 31 }, (_, i) => ({ id: `e-${i.toString(16).padStart(8, "0")}`, state: "eligible" as const, desiredIdentity: `id-${i}`, audio: ref, metadata: ref }));
+    for (const item of episodes) {
+      const outcome = { record_version: 1, target: item.id, desired_identity: item.desiredIdentity, applied_identity: null, attempt_revision: null, state: "pending", trigger: "acceptance", error: null, notification: null };
+      state.storage.sql.exec("INSERT INTO publication_outcomes VALUES (?, 'pending', ?)", item.id, JSON.stringify(outcome));
+    }
+    const candidate = { state: "ready" as const, revision: 1, control, episodes, feed: "<rss>new</rss>", cover: ref, coverPath, nextAlarm: null, release: () => {} };
+    await env.DELIVERY_BUCKET.put(`${showId}/feed.xml`, "<rss>old</rss>");
+    let groups = 0;
+    const noDirectCopy = async () => { throw new Error("Unexpected direct copy"); };
+    const first = await applyCandidate(state.storage, env.DELIVERY_BUCKET, showId, candidate, noDirectCopy, async () => {}, "acceptance", async items => {
+      groups++;
+      for (const item of items) await env.DELIVERY_BUCKET.put(item.path, "partial");
+      if (groups === 8) throw new Error("response lost after copy");
+    });
+    expect(first).toBe("failed");
+    expect(await (await env.DELIVERY_BUCKET.get(`${showId}/feed.xml`))!.text()).toBe("<rss>old</rss>");
+    const deleted = new Set<string>(), copied: string[] = [];
+    const bucket = { delete: async (key: string) => { deleted.add(key); await env.DELIVERY_BUCKET.delete(key); },
+      put: (key: string, value: string, options: R2PutOptions) => env.DELIVERY_BUCKET.put(key, value, options) } as unknown as R2Bucket;
+    expect(await applyCandidate(state.storage, bucket, showId, candidate, noDirectCopy, async () => {}, "recover", async items => {
+      for (const item of items) {
+        expect(deleted.has(item.path)).toBe(true);
+        copied.push(item.path);
+        await env.DELIVERY_BUCKET.put(item.path, "recovered");
+      }
+    })).toBe("applied");
+    expect(copied.filter(path => path.endsWith("/audio.mp3"))).toHaveLength(31);
+    expect(await (await env.DELIVERY_BUCKET.get(`${showId}/feed.xml`))!.text()).toBe("<rss>new</rss>");
+  });
+});
+
 test("a feed write failure stays failed until an explicit recovery rebuilds it", async () => {
   const showId = "s-yyyyyyyy";
   await runInDurableObject(env.SHOWS.getByName(showId), async (_instance, state) => {

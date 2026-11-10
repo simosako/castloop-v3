@@ -4,10 +4,10 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-11-04",
   "observability": { "enabled": true, "traces": { "enabled": true } },
-  "secrets": { "required": ["ADMIN_TOKEN", "R2_COPY_ACCESS_KEY_ID", "R2_COPY_SECRET_ACCESS_KEY"] },
+  "secrets": { "required": ["ADMIN_TOKEN"] },
   "vars": { "DELIVERY_BASE": "", "CUSTOM_DELIVERY_BASE": "", "CUSTOM_ZONE_ID": "", "R2_ACCOUNT_ID": "", "R2_MANAGEMENT_BUCKET": "castloop-management", "R2_DELIVERY_BUCKET": "castloop-delivery", "EMAIL_FROM": "", "EMAIL_TO": "" },
   "r2_buckets": [{ "binding": "MANAGEMENT_BUCKET", "bucket_name": "castloop-management" }, { "binding": "DELIVERY_BUCKET", "bucket_name": "castloop-delivery" }],
-  "services": [{ "binding": "DELIVERY_SERVICE", "service": "castloop-delivery" }, { "binding": "NOTIFIER", "service": "castloop-management", "entrypoint": "Notifier" }],
+  "services": [{ "binding": "DELIVERY_SERVICE", "service": "castloop-delivery" }, { "binding": "NOTIFIER", "service": "castloop-management", "entrypoint": "Notifier" }, { "binding": "COPIER", "service": "castloop-copier" }],
   "send_email": [{ "name": "EMAIL" }],
   "durable_objects": { "bindings": [{ "name": "SHOWS", "class_name": "ShowDO" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ShowDO"] }]

@@ -53,7 +53,7 @@ test("migration preflights, publishes a new feed and commits the new origin; ret
       const url = String(input); calls.push(`${init?.method ?? "GET"} ${url}`);
       if (url.startsWith("https://api.cloudflare.com/")) return Response.json({ success: true, errors: [] });
       if (init?.method === "HEAD") return new Response(null, { headers: { "content-length": "5", "cf-cache-status": "HIT" } });
-      return new Response("a", { status: 206, headers: { "content-range": "bytes 0-0/5" } });
+      return new Response("a", { status: 206, headers: { "content-range": "bytes 0-0/5", "cf-cache-status": "MISS" } });
     });
     const operation = operationSchema.parse({ ...base(5, 4), action: "delivery.set", payload: { target_base: "https://podcasts.example.test", confirmed: true } });
     try {

@@ -68,8 +68,8 @@ export async function readSecrets(directory: string, environment: Readonly<Recor
   try { values = parseStringTable(await readFile(join(directory, "credentials.toml"), "utf8"), secretKeys); }
   catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
   return { admin_token: environment.CASTLOOP_ADMIN_TOKEN ?? values.admin_token,
-    r2_access_key_id: environment.CASTLOOP_R2_ACCESS_KEY_ID ?? values.r2_access_key_id,
-    r2_secret_access_key: environment.CASTLOOP_R2_SECRET_ACCESS_KEY ?? values.r2_secret_access_key };
+    r2_access_key_id: environment.CASTLOOP_CLI_R2_ACCESS_KEY_ID ?? values.r2_access_key_id,
+    r2_secret_access_key: environment.CASTLOOP_CLI_R2_SECRET_ACCESS_KEY ?? values.r2_secret_access_key };
 }
 
 /** Read one secret without echo; noninteractive users can use environment overrides. */

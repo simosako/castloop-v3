@@ -20,6 +20,9 @@ test("workspace configuration excludes credentials; credentials use a separate p
     await setSecret(directory, "r2_access_key_id", "test-id");
     expect((await readSecrets(directory, {})).admin_token).toBe("private-token");
     expect((await readSecrets(directory, { CASTLOOP_ADMIN_TOKEN: "override" })).admin_token).toBe("override");
+    const overridden = await readSecrets(directory, { CASTLOOP_CLI_R2_ACCESS_KEY_ID: "override-id", CASTLOOP_CLI_R2_SECRET_ACCESS_KEY: "override-secret" });
+    expect(overridden.r2_access_key_id).toBe("override-id");
+    expect(overridden.r2_secret_access_key).toBe("override-secret");
     expect((await readConfig(root)).management_bucket).toBe("test-bucket");
     expect(await readFile(join(root, ".castloop", "config.toml"), "utf8")).not.toContain("private-token");
     if (process.platform !== "win32") expect((await stat(join(directory, "credentials.toml"))).mode & 0o777).toBe(0o600);
