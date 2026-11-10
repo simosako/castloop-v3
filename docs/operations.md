@@ -1,12 +1,12 @@
 # Castloop operations
 
-This guide describes the current development implementation. It has been tested locally with simulated Cloudflare services, not deployed for production use. See [verification](verification.md) for the remaining integration checks.
+This guide describes the current development implementation. It has been tested locally and in an isolated Cloudflare installation, not deployed for production use. See [verification](verification.md) for the remaining integration checks.
 
 ## Workspace and credentials
 
 Build the CLI with `bun run build:cli` and run `dist/castloop` from a workspace directory. For release artifacts, run `bun run build:release --target bun-linux-x64` (or `--all` for the five planned targets); this writes binaries and SHA-256 checksums under `dist/release`. Cross-compiled binaries require tests on their native hosts before support is claimed. Run `castloop init` once, then set `management_url`, `account_id`, `management_bucket` and `delivery_bucket` using `castloop config set <key> <value>`. The optional `r2_endpoint` is intended for an alternative compatible endpoint or local test service.
 
-Set `admin_token`, `r2_access_key_id` and `r2_secret_access_key` using `castloop auth set <name>` in an interactive terminal. Alternatively supply `CASTLOOP_ADMIN_TOKEN`, `CASTLOOP_R2_ACCESS_KEY_ID` and `CASTLOOP_R2_SECRET_ACCESS_KEY` as environment variables. Credentials are stored separately from workspace TOML under `$XDG_CONFIG_HOME/castloop/credentials.toml`, or `~/.config/castloop/credentials.toml` when the variable is unset. Do not put credentials in Show or Episode TOML.
+Set `admin_token`, `r2_access_key_id` and `r2_secret_access_key` using `castloop auth set <name>` in an interactive terminal. Alternatively supply `CASTLOOP_ADMIN_TOKEN`, `CASTLOOP_CLI_R2_ACCESS_KEY_ID` and `CASTLOOP_CLI_R2_SECRET_ACCESS_KEY` as environment variables. Credentials are stored separately from workspace TOML under `$XDG_CONFIG_HOME/castloop/credentials.toml`, or `~/.config/castloop/credentials.toml` when the variable is unset. Do not put credentials in Show or Episode TOML.
 
 ## Publishing
 
@@ -28,6 +28,8 @@ The CLI uses exit code 2 for invalid command arguments and local validation erro
 Set an Episode's `publish = false` and push, or run `castloop episode delete <show> <episode>`. To stop an entire Show, set Show `publish = false` and push, or run `castloop show delete <show>`. Show stop and deletion require confirmation; noninteractive use requires `--yes`. These operations remove public delivery while retaining private source versions. Replacing audio uses `episode upload-audio` again; already downloaded copies are unaffected.
 
 If an operation's response is uncertain, retain the operation ID shown by the CLI and run `castloop operation retry <operation-id>`. This replays the saved request; do not invent a new operation for an uncertain outcome. If the server accepted an operation but the CLI could not update local state or remove the receipt, the CLI reports the accepted revision and delivery outcome. Fix the local error, then retry the retained operation; use `pull` if instructed to refresh the baseline. `check` reports stored publication and notification outcomes. Cloudflare Workers Logs contain diagnostic events. `recover` starts the applicable publication work again from current accepted intent; there is no automatic publication retry.
+
+Cloudflare limits cache-purge requests, including those made by Workers Caching. In a rapid bulk-upload test, the source audio was accepted but delivery failed when the purge rate limit was reached. Inspect Workers Logs for the cause, allow the limit to replenish, and run `recover` for the affected Episode or Show. Repeated bulk operations can exhaust the limit again; space out subsequent updates. See [verification](verification.md) for the observed behavior and the applicable Cloudflare documentation.
 
 If the CLI stops during local ID collision recovery, run `castloop operation recover-local` to restore the pre-move files without contacting Cloudflare. Until that recovery succeeds, commands that could modify the workspace or remote state are stopped; `check` and `show list` remain available. A `push` also attempts the local recovery before proceeding. If the affected TOML has been edited since interruption, recovery stops and reports the file instead of overwriting the edit.
 
