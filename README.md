@@ -1,5 +1,7 @@
 # Castloop
 
+[日本語](README_ja.md)
+
 Castloop is a self-hosted, public podcast hosting service for your Cloudflare account. Edit Show and Episode metadata in TOML, manage your podcast with a standalone CLI, and distribute an RSS feed and MP3 audio to podcast apps.
 
 The administrator deploys Castloop to their own Cloudflare account. Source metadata and media are kept in a private R2 bucket; separate delivery objects are served through a Worker or, with a custom domain, through Cloudflare's CDN. You can start with a `workers.dev` URL and no custom domain. Castloop is designed with Cloudflare's free allowances in mind, although usage and costs depend on your workload and account.

@@ -1,5 +1,7 @@
 # Install Castloop on Cloudflare
 
+[日本語](installation_ja.md)
+
 This guide deploys Castloop to your Cloudflare account using a `workers.dev` URL, then publishes a Show and Episode. A custom domain is optional.
 
 Castloop is under development. The guide's deployment and publishing flow has been exercised in an isolated Cloudflare account, with the credential and authentication differences noted in [verification](verification.md). Try a test installation before relying on it for an existing podcast.
