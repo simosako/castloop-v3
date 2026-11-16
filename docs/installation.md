@@ -2,7 +2,7 @@
 
 This guide deploys Castloop to your Cloudflare account using a `workers.dev` URL, then publishes a Show and Episode. A custom domain is optional.
 
-Castloop is under development. The deployment order has been tested in an isolated Cloudflare account, but this exact guide has not yet been independently tested from start to finish. See [verification](verification.md) for the test results and remaining gaps. Try a test installation before relying on it for an existing podcast.
+Castloop is under development. The guide's deployment and publishing flow has been exercised in an isolated Cloudflare account, with the credential and authentication differences noted in [verification](verification.md). Try a test installation before relying on it for an existing podcast.
 
 ## Before you begin
 
@@ -59,11 +59,19 @@ bunx wrangler r2 bucket create "$CASTLOOP_DELIVERY_BUCKET"
 
 Leave public `r2.dev` access disabled for both buckets. The management bucket holds private source files. Only material intended for publication is copied to the delivery bucket; its contents are served publicly by the delivery Worker.
 
-Set an [R2 lifecycle rule](https://developers.cloudflare.com/r2/buckets/object-lifecycles/) on the management bucket to abort incomplete multipart uploads after seven days:
+Check the management bucket's [R2 lifecycle rules](https://developers.cloudflare.com/r2/buckets/object-lifecycles/):
+
+```sh
+bunx wrangler r2 bucket lifecycle list "$CASTLOOP_MANAGEMENT_BUCKET"
+```
+
+If there is not already an enabled rule covering all prefixes that aborts incomplete multipart uploads after seven days or less, add one:
 
 ```sh
 bunx wrangler r2 bucket lifecycle add "$CASTLOOP_MANAGEMENT_BUCKET" castloop-abort-incomplete --abort-multipart-days 7
 ```
+
+Confirm the prompt to apply the rule to all prefixes. Newly created buckets may already have a seven-day default rule; in that case no additional rule is needed.
 
 Do not add an expiration rule for completed objects: accepted podcast sources must be retained. Create the two R2 S3 API credentials described in [credential scopes](deployment.md#credential-and-permission-inventory) in the Cloudflare dashboard. Save each access key ID and secret access key securely. These credentials are different from the API token used by Wrangler.
 
@@ -255,7 +263,7 @@ castloop push --show <show-id>
 castloop episode upload-audio <show-id> <episode-id> /path/to/episode.mp3
 ```
 
-The CLI can report pending or blocked delivery while a draft is unpublished or incomplete; check the reported acceptance and validation messages before retrying. Set `publish = true` in the Episode TOML and push again. A future publication date schedules the Episode. The feed is updated automatically.
+The initial Episode push saves the draft but reports a missing audio validation issue and exits with code 2. Once audio is accepted, set `publish = true` in the Episode TOML and push again. The CLI can report pending or blocked delivery while a draft is incomplete; check the reported acceptance and validation messages before retrying. A future publication date schedules the Episode. The feed is updated automatically.
 
 ```sh
 castloop push --show <show-id>
