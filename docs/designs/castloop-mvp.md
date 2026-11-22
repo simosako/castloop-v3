@@ -3,7 +3,7 @@
 * **Author:** Akira Shimosako
 * **Status:** Finalized — the author concluded the EGM review and confirmed this design on 2026-11-08. All design sections, individual decisions 1–11, the combined Detailed Implementation Plan and approved Stage 5, Stage 7 and all seven Stage 9 resolutions are reflected here. Implementation has not started. The author selected finalization without a post-edit re-audit; review-loop convergence and runtime readiness are not claimed.
 * **Date:** 2026-11-08
-* **Predecessor:** [Consolidated concepts brief](../../concepts_brief.md)
+* **Predecessor:** [Consolidated concepts brief](working-notes/concepts_brief.md)
 
 ## Overview
 
@@ -203,7 +203,7 @@ Shared TypeScript domain helpers provide TOML parsing, metadata validation, time
 
 Keep acceptance validation distinct from publication readiness. Malformed input, unknown TOML fields, wrong field types, identity mismatch, unsupported protocol/schema and stale revision reject acceptance. Missing publication fields or audio in otherwise identifiable, parseable input can be saved and reported as unpublishable. Episode add/update is rejected while current show TOML is invalid.
 
-The [TOML mapping reference](../../toml_spec.md) includes historical mappings as well as accepted decisions. The approved Detailed Implementation Plan, section 2, defines the MVP field set, defaults, media requirements and deferred extensions. Mapping an advanced RSS field in the reference does not include it in the MVP.
+The [TOML mapping reference](working-notes/toml_spec.md) includes historical mappings as well as accepted decisions. The approved Detailed Implementation Plan, section 2, defines the MVP field set, defaults, media requirements and deferred extensions. Mapping an advanced RSS field in the reference does not include it in the MVP.
 
 Show and episode descriptions accept plain text and the agreed HTML tags: `p`, `br`, `strong`, `em`, `b`, `i`, `ul`, `ol`, `li`, `a`, `h2`, `h3`, `blockquote`, `pre`, `code` and `hr`. The only user-supplied attribute is `href` on `a`, restricted to an absolute HTTPS URL. Reject unsupported tags/attributes with field-specific publication validation errors while retaining parseable source TOML under existing validation policies; do not silently strip them. Use parser-based structure validation. Images, embedded media, scripts, event handlers, inline styles and user classes are unsupported. Podcast clients may render supported tags differently. The future static website will need styling for these elements; that website is not part of the MVP.
 
@@ -632,14 +632,14 @@ The following is the single file inventory for this plan. Every implementation t
 | `./docs/migration-and-restore.md` | Create | Domain cutover/rollback steps, 301/client limitations, required-file restore checks, stopped-target replacement and explicit resume. |
 | `./docs/verification.md` | Create | Repeatable test/smoke instructions, runtime measurements and unsupported-capacity statements, with actual observed results added during implementation. |
 | `./docs/designs/castloop-mvp.md` | Modify | Keep the finalized implementation contract and measured-gate results current; do not label planned checks as passed. |
-| `./concepts_brief.md` | Modify | After approval, reconcile new externally visible choices with this predecessor and link the final design. |
-| `./implementation_decisions.md` | Modify | Preserve decisions 1–11 and record this combined proposal's review result rather than leave choices silently unresolved. |
-| `./toml_spec.md` | Modify | Reconcile metadata tables/examples and replace superseded UUID-ID, Cron and disposable-SQLite wording with the accepted specification. |
-| `./management_asset_ledger.md` | Modify | Link the accepted cleanup claim/retention rules and separate historical registration proposals. |
-| `./delivery_cache_policy.md` | Modify | Link concrete cache setup, 404 withdrawal and per-show 301 migration procedure. |
-| `./publication_errors_and_notifications.md` | Modify | Remove stale destination questions and clearly label historical notification proposals; link the accepted notifier/error policy. |
-| `./publication_execution_flow.md` | Modify | Link the agreed executor/alarms/hold rules and mark obsolete execution proposals as historical. |
-| `./staged_update_protocol.md` | Modify | Link concrete accepted request/receipt shapes and distinguish the old R2-manifest proposal from authoritative SQL acceptance. |
+| `docs/designs/working-notes/concepts_brief.md` | Historical predecessor | Reconciled; this approved design is the current implementation contract. |
+| `docs/designs/working-notes/implementation_decisions.md` | Decision history | Preserves decisions 1–11 and their alternatives; consult the approved design for current behavior. |
+| `docs/designs/working-notes/toml_spec.md` | Mapping notes | Contains historical mappings; the MVP field set and defaults are defined in this design. |
+| `docs/designs/working-notes/management_asset_ledger.md` | Design history | Retains earlier asset-registration proposals; current retention and cleanup rules are in this design. |
+| `docs/designs/working-notes/delivery_cache_policy.md` | Design history | Retains policy discussion; current cache and migration behavior is in this design. |
+| `docs/designs/working-notes/publication_errors_and_notifications.md` | Design history | Retains notification discussion; current failure handling is in this design. |
+| `docs/designs/working-notes/publication_execution_flow.md` | Design history | Retains execution-flow discussion; current publication behavior is in this design. |
+| `docs/designs/working-notes/staged_update_protocol.md` | Design history | Retains protocol discussion; current acceptance and receipt behavior is in this design. |
 
 Wrangler-generated binding declaration files at `packages/worker/worker-configuration.d.ts` and `packages/delivery/worker-configuration.d.ts` are generated locally/for checks and ignored, not manually maintained. `dist/` binaries/checksums are build artifacts. No existing document is deleted by this implementation plan. Historical reviews and earlier option notes stay as historical evidence and are not rewritten as approvals.
 
@@ -653,7 +653,7 @@ Wrangler-generated binding declaration files at `packages/worker/worker-configur
 6. **Measure the intended archive.** Generate representative 100-, 1,000- and larger-episode metadata sets in tests/smoke code rather than committing large fixtures. Record RSS size, SQL rows, R2 reads/copies, actual configured DO CPU limit, measured CPU, elapsed duration and memory separately. Verify that one complete captured affected-show batch fits that configuration; do not infer CPU usage from elapsed time. No arbitrary show-count limit is added. If a complete full-feed rebuild cannot fit the selected DO invocation budget, stop and revisit the measured bottleneck; do not add a stage-resume journal, automatic continuation alarm or manually required publishing step without approval.
 7. **Run the release checks once behavior is complete.** `bun run typecheck`, `bun run test:domain`, `bun run test:cli`, `bun run test:workers` and `bun run build:cli`. Initial standalone targets are Linux x64/arm64, macOS x64/arm64 and Windows x64. Run help/config/local-fixture smoke checks on native hosts before declaring a target supported; cross-compilation alone is insufficient. `bun run verify:deployed` is explicitly opted in with disposable installation credentials and prints resource usage/results. No Cloudflare deployment or email is performed merely by running unit tests.
 
-The DO transaction/cache/platform integration checks remain unperformed. The latest documentation is an implementation input, not evidence that this application fits the free allowance. Exact permission grants remain the separately authorized working-MVP verification task. Predecessor reconciliation is recorded in [implementation decisions](../../implementation_decisions.md#13-finalization-reconciliation). The author-confirmed final document is `docs/designs/castloop-mvp.md`. The fresh EGM review stages have run, approved resolutions are applied and the author concluded the review on 2026-11-08. No post-edit re-audit, loop convergence or implementation authorization is implied.
+The DO transaction/cache/platform integration checks remain unperformed. The latest documentation is an implementation input, not evidence that this application fits the free allowance. Exact permission grants remain the separately authorized working-MVP verification task. Predecessor reconciliation is recorded in [implementation decisions](working-notes/implementation_decisions.md#13-finalization-reconciliation). The author-confirmed final document is `docs/designs/castloop-mvp.md`. The fresh EGM review stages have run, approved resolutions are applied and the author concluded the review on 2026-11-08. No post-edit re-audit, loop convergence or implementation authorization is implied.
 
 ### 10. Shared protocol and persistence contracts
 
