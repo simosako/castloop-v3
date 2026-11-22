@@ -1,0 +1,32 @@
+# Local integration test with the large audio fixture.
+prefix_rule(
+    pattern = ["env", "CASTLOOP_LOCAL_LARGE_AUDIO=1", "bun", "test", "--env-file=.local-test/integration.env", "scripts/local-integration.test.ts"],
+    decision = "allow",
+    justification = "Run local large audio integration test",
+)
+
+# Live Cloudflare inspection scripts under .local-test (git-ignored, local only).
+prefix_rule(
+    pattern = ["python3", ".local-test/live-cloudflare/inspect-workers.py"],
+    decision = "allow",
+    justification = "Inspect live Workers",
+)
+
+prefix_rule(
+    pattern = ["python3", ".local-test/live-cloudflare/check-token-permissions.py"],
+    decision = "allow",
+    justification = "Check Cloudflare token permissions",
+)
+
+prefix_rule(
+    pattern = ["bun", ".local-test/live-cloudflare/check-s3-credentials.ts"],
+    decision = "allow",
+    justification = "Check S3 credentials",
+)
+
+# Endpoint status checks.
+prefix_rule(
+    pattern = ["curl", "-s", "-o", "/dev/null", "-w"],
+    decision = "allow",
+    justification = "Check endpoint HTTP status",
+)
