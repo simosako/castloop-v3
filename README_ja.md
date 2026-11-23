@@ -29,6 +29,10 @@ Castloopは開発中です。無料プランのテスト環境で実際のPodcas
 - [検証記録（英語）](docs/verification.md) — 実施済みのテストと残る制約。
 - [MVP設計（英語）](docs/designs/castloop-mvp.md) — アーキテクチャと設計上の決定事項。
 
+## ライセンス
+
+Castloopは[MIT License](LICENSE)で提供します。
+
 ## 開発
 
 [Bun](https://bun.sh/)をインストールし、次のコマンドを実行します。

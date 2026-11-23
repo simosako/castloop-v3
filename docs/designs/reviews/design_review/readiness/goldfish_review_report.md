@@ -46,7 +46,7 @@ The exact proposed contract/behavior additions are in [Specification Refinements
 * **Discrepancy Description:** Default parser/serializer settings cannot preserve all unknown integer values or integer-versus-float types when timezone insertion causes normalization.
 * **Rationale:** Unknown `1.0` can become integer `1`, and valid 64-bit integers require deliberate BigInt handling. Raw-byte preservation does not cover required normalization.
 * **AI Suggestion:** PROPOSE FIX.
-* **Justification:** The supplied library capture explicitly documents `integersAsBigInt` and `numbersAsFloat`. The existing parser can satisfy this without adding a new dependency. See the [saved source](../sources/07.txt).
+* **Justification:** The smol-toml README supplied during review documented `integersAsBigInt` and `numbersAsFloat`. The existing parser can satisfy this without adding a new dependency. See the [upstream README](https://github.com/squirrelchat/smol-toml/blob/mistress/README.md); its current contents may differ from the reviewed version.
 * **Proposed Edit:** Apply the shared IR-4/IR-6 option policy: BigInt source integers plus float-aware serialization, separate safe numeric extraction for known fields, untouched unknown nested values, raw preservation when possible, backups before normalization and fixtures for the enumerated numeric cases. If a round-trip compatibility case fails, stop normalization and preserve the original; do not upload a silently changed value.
 
 ### IR-5 [egm-style] — Severity: Major

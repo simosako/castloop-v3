@@ -41,12 +41,12 @@ Changes since Stage 5 do not introduce an architectural regression:
 - Required `agents/zoom_out.md` persona and `resources/document_standards/zoom-out-standard.md`.
 - Entire target document.
 - `reviews/design_review/context.txt` and its three local context documents: `concepts_brief.md`, `toml_spec.md`, `implementation_decisions.md`.
-- Substantive material from all fifteen supplied captures, `reviews/design_review/sources/01.txt` through `15.txt`.
+- Substantive material from all fifteen captures supplied at review time; they have since been removed and their source URLs remain in the review README.
 - Explicit Stage 8 additions: `zoom_out_report.md`, `comprehension_report.md`, `critic_report.md`, `goldfish_review_report.md`.
 - Bounded rereads closed truncated substantive output gaps. Repeated website navigation/footer material was not treated as design evidence.
 
 ## Limitations and next checkpoint
 
-This is a document-level simplicity and architecture review. No files were modified, no code was compiled, no deployment or email occurred, and no platform, dependency, performance, cache, copy, alarm or permission check passed as part of this review. Saved source captures provide documentary context, not runtime evidence.
+This is a document-level simplicity and architecture review. No files were modified, no code was compiled, no deployment or email occurred, and no platform, dependency, performance, cache, copy, alarm or permission check passed as part of this review. Source captures supplied at review time provided documentary context, not runtime evidence; they have since been removed.
 
 Stage 8 is complete. The author checkpoint precedes Stage 9, Implementation Readiness. The parent workflow proceeded to Stage 8 after author-approved Stage 7 resolutions; this result does not claim that the critic loop ran two consecutive clean rounds or converged.

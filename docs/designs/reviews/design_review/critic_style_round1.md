@@ -15,6 +15,6 @@ The introduction refers to “the open choices in Technical Plan section 13,” 
 
 > These alternatives summarize the predecessor’s recorded decisions and the approved Technical Plan review. Section 13 lists remaining implementation and runtime verification gates.
 
-**Coverage:** Reviewed target lines 1–404 and all 18 context files listed in `reviews/design_review/context.txt`: the three local supporting documents and external captures `01.txt`–`15.txt`. Checked conciseness, technical precision, objective framing, decision status, claim calibration and defensive caveats. Runtime prerequisites tied to concrete implementation decisions—including SQL/alarm atomicity, range delivery, purge behavior and dependency compatibility—should remain.
+**Coverage:** Reviewed target lines 1–404 and all 18 context items listed at review time: the three local supporting documents and external captures `01.txt`–`15.txt` (since removed; source URLs remain in the review README). Checked conciseness, technical precision, objective framing, decision status, claim calibration and defensive caveats. Runtime prerequisites tied to concrete implementation decisions—including SQL/alarm atomicity, range delivery, purge behavior and dependency compatibility—should remain.
 
 **Limitations:** Read-only document review using supplied evidence. No implementation, deployment or runtime verification performed. No prior review reports or conversation history accessed.

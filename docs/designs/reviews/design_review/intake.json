@@ -11,145 +11,70 @@
     759
   ],
   "local_context": [
-    "/home/sim/project/castloop-v3/concepts_brief.md",
-    "/home/sim/project/castloop-v3/toml_spec.md",
-    "/home/sim/project/castloop-v3/implementation_decisions.md"
+    "../../working-notes/concepts_brief.md",
+    "../../working-notes/toml_spec.md",
+    "../../working-notes/implementation_decisions.md"
   ],
   "external_sources": [
     {
       "url": "https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/",
-      "resolved_url": "https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/",
-      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/01.html",
-      "content_type": "text/html",
-      "bytes": 274314,
-      "sha256": "4de42fbc8062afabe5f6f95d73b422ed5c39fe72eef53b6ac9ca5cf520bac60a",
-      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/01.txt"
+      "resolved_url": "https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/"
     },
     {
       "url": "https://developers.cloudflare.com/durable-objects/api/alarms/",
-      "resolved_url": "https://developers.cloudflare.com/durable-objects/api/alarms/",
-      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/02.html",
-      "content_type": "text/html",
-      "bytes": 149365,
-      "sha256": "cdd7992017065264eef96085c09c73d05f761a616b8b54a54c2e9f89e7d8356d",
-      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/02.txt"
+      "resolved_url": "https://developers.cloudflare.com/durable-objects/api/alarms/"
     },
     {
       "url": "https://developers.cloudflare.com/workers/cache/purge/",
-      "resolved_url": "https://developers.cloudflare.com/workers/cache/purge/",
-      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/03.html",
-      "content_type": "text/html",
-      "bytes": 318773,
-      "sha256": "2fdf7f06e441ecb756d867e4375a740d049aff267c08737c15a91e5c4c6d3daa",
-      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/03.txt"
+      "resolved_url": "https://developers.cloudflare.com/workers/cache/purge/"
     },
     {
       "url": "https://developers.cloudflare.com/cache/how-to/purge-cache/",
-      "resolved_url": "https://developers.cloudflare.com/cache/how-to/purge-cache/",
-      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/04.html",
-      "content_type": "text/html",
-      "bytes": 121933,
-      "sha256": "a07c3278676b280ffd621355c6aa925fb1a204d67285a45795c822d9251260e8",
-      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/04.txt"
+      "resolved_url": "https://developers.cloudflare.com/cache/how-to/purge-cache/"
     },
     {
       "url": "https://developers.cloudflare.com/workers/observability/logs/workers-logs/",
-      "resolved_url": "https://developers.cloudflare.com/workers/observability/logs/workers-logs/",
-      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/05.html",
-      "content_type": "text/html",
-      "bytes": 231116,
-      "sha256": "b1aa9011a6432d18120cbe420862e940d1be21659660efb58ac7981941f38c32",
-      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/05.txt"
+      "resolved_url": "https://developers.cloudflare.com/workers/observability/logs/workers-logs/"
     },
     {
       "url": "https://developers.cloudflare.com/durable-objects/observability/metrics-and-analytics/",
-      "resolved_url": "https://developers.cloudflare.com/durable-objects/observability/metrics-and-analytics/",
-      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/06.html",
-      "content_type": "text/html",
-      "bytes": 132458,
-      "sha256": "6e83275548a8ed37975c66d614ec8fb841a10e5b2f8226f5fe3d02132d9f50d6",
-      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/06.txt"
+      "resolved_url": "https://developers.cloudflare.com/durable-objects/observability/metrics-and-analytics/"
     },
     {
       "url": "https://github.com/squirrelchat/smol-toml/blob/mistress/README.md",
-      "resolved_url": "https://github.com/squirrelchat/smol-toml/blob/mistress/README.md",
-      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/07.html",
-      "content_type": "text/html; charset=utf-8",
-      "bytes": 467835,
-      "sha256": "14232fd3eb25e062df58ef3bef97332659cbd7b259245655da551a8094425f1e",
-      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/07.txt"
+      "resolved_url": "https://github.com/squirrelchat/smol-toml/blob/mistress/README.md"
     },
     {
       "url": "https://github.com/js-temporal/temporal-polyfill",
-      "resolved_url": "https://github.com/js-temporal/temporal-polyfill",
-      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/08.html",
-      "content_type": "text/html; charset=utf-8",
-      "bytes": 286074,
-      "sha256": "688f04e523d553414bd09a5a18527e9ca3cef0aae94c589feda59ea275c359d4",
-      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/08.txt"
+      "resolved_url": "https://github.com/js-temporal/temporal-polyfill"
     },
     {
       "url": "https://github.com/inikulin/parse5",
-      "resolved_url": "https://github.com/inikulin/parse5",
-      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/09.html",
-      "content_type": "text/html; charset=utf-8",
-      "bytes": 255060,
-      "sha256": "8cb0c1173117f761fba26d4a96e2912f0722895529b167961b4596561fa27698",
-      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/09.txt"
+      "resolved_url": "https://github.com/inikulin/parse5"
     },
     {
       "url": "https://github.com/Borewit/music-metadata",
-      "resolved_url": "https://github.com/Borewit/music-metadata",
-      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/10.html",
-      "content_type": "text/html; charset=utf-8",
-      "bytes": 687719,
-      "sha256": "d374d47199941e262a656dd9ccd0b2e9484aa0d480701d071cb4ed2883ad0f44",
-      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/10.txt"
+      "resolved_url": "https://github.com/Borewit/music-metadata"
     },
     {
       "url": "https://github.com/mhart/aws4fetch",
-      "resolved_url": "https://github.com/mhart/aws4fetch",
-      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/11.html",
-      "content_type": "text/html; charset=utf-8",
-      "bytes": 303761,
-      "sha256": "c3f028c0aefc3a05af480b1df1a1d13530d71dd4d68e3578a010351cdc6882c2",
-      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/11.txt"
+      "resolved_url": "https://github.com/mhart/aws4fetch"
     },
     {
       "url": "https://bun.sh/docs/compiler/executables",
-      "resolved_url": "https://bun.sh/docs/compiler/executables",
-      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/12.html",
-      "content_type": "text/html; charset=utf-8",
-      "bytes": 556448,
-      "sha256": "d2fca37dbff26dc7c5f253f713ee16b4e5a481ed301975d431b7bd74580ddae9",
-      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/12.txt"
+      "resolved_url": "https://bun.sh/docs/compiler/executables"
     },
     {
       "url": "https://developers.cloudflare.com/workers/testing/vitest-integration/",
-      "resolved_url": "https://developers.cloudflare.com/workers/testing/vitest-integration/",
-      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/13.html",
-      "content_type": "text/html",
-      "bytes": 179040,
-      "sha256": "964a6096924b9a0f8e08b9bba3c02dd0ccb78bb90920819873a9f957ad5f0577",
-      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/13.txt"
+      "resolved_url": "https://developers.cloudflare.com/workers/testing/vitest-integration/"
     },
     {
       "url": "https://developers.cloudflare.com/workers/cache/configuration/",
-      "resolved_url": "https://developers.cloudflare.com/workers/cache/configuration/",
-      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/14.html",
-      "content_type": "text/html",
-      "bytes": 297200,
-      "sha256": "b0bf0807cda31a0a875ab491ee824e35aebdec256668bd8800c3aa707aadedd5",
-      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/14.txt"
+      "resolved_url": "https://developers.cloudflare.com/workers/cache/configuration/"
     },
     {
       "url": "https://podcasters.apple.com/support/837-change-the-rss-feed-url",
-      "resolved_url": "https://podcasters.apple.com/support/837-change-the-rss-feed-url",
-      "path": "/home/sim/project/castloop-v3/reviews/design_review/sources/15.html",
-      "content_type": "text/html",
-      "bytes": 20016,
-      "sha256": "9b01ce050eaadc435832aca200d74720363a11417667c7579b64014e707dfdcd",
-      "readable_path": "/home/sim/project/castloop-v3/reviews/design_review/sources/15.txt"
+      "resolved_url": "https://podcasters.apple.com/support/837-change-the-rss-feed-url"
     }
   ],
   "failed": [],
@@ -302,5 +227,6 @@
     "remaining_unaddressed": 0,
     "post_edit_reaudit": false,
     "implementation_started": false
-  }
+  },
+  "capture_status": "Downloaded HTML and text extracts were removed from the public repository; only source URLs remain. The sources may have changed since review."
 }

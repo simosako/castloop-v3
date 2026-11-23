@@ -18,6 +18,6 @@ Evidence read:
 - Persona `agents/inventive_catalyst.md` and `resources/document_standards/zoom-out-standard.md`.
 - Complete target `docs/designs/castloop-mvp.md`, lines 1–649.
 - Context manifest `reviews/design_review/context.txt` and provenance `reviews/design_review/intake.json`.
-- Every listed context file: `concepts_brief.md`, `toml_spec.md`, `implementation_decisions.md`, and readable external captures `reviews/design_review/sources/01.txt` through `15.txt`.
+- Every listed context file: `concepts_brief.md`, `toml_spec.md`, `implementation_decisions.md`, and readable external captures `01.txt` through `15.txt` (since removed; source URLs remain in the review README).
 
-Coverage: complete for the supplied target and listed context. Raw HTML originals were not independently audited; their readable captures and provenance were used. No code execution, deployment, runtime verification, external retrieval, historical review inspection, or workspace modification was performed. This strategic assessment does not establish that the pending platform integration gates pass.
+Coverage: complete for the supplied target and listed context. Raw HTML originals were not independently audited; their readable captures and provenance were used. No code execution, deployment, runtime verification, external retrieval, historical review inspection, or workspace modification was performed. This strategic assessment does not establish that the pending platform integration gates pass. The downloaded external captures have since been removed; see the review README for source URLs.

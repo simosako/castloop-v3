@@ -27,8 +27,7 @@ Affected active-scope lines: **422, 430–439, 581, 587**.
 
 The plan promises preservation of unknown fields through parsing and normalization but only specifies Temporal handling. The supplied `smol-toml` capture explicitly states:
 
-- Default parsing cannot represent integers beyond 53 bits (`sources/07.txt:203–218`).
-- Default serialization changes a floating-point value such as `1.0` into an integer; full numeric type preservation requires the documented BigInt/serialization options (`sources/07.txt:219–224`, also the stringify notes).
+- Default parsing cannot represent integers beyond 53 bits, and default serialization can change an integral float such as `1.0` into an integer. The review used the [smol-toml README](https://github.com/squirrelchat/smol-toml/blob/mistress/README.md); the downloaded capture has since been removed and the upstream README may have changed.
 
 Consequently, an otherwise valid draft containing an unsupported large integer can fail parsing, and normalization can change an unknown field’s TOML type. Preserving raw bytes only when no normalization occurs does not cover initial timezone insertion. Specify numeric parse/stringify options, conversion rules for known integer fields, and fixtures covering unknown 64-bit integers and integral floats during timezone normalization.
 

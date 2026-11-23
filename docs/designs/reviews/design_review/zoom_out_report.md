@@ -3,7 +3,7 @@
 * Target: [Final design](../../castloop-mvp.md), full file, lines 1–649.
 * Preset: Interactive full review.
 * Status: Stage 5 complete; waiting for the author checkpoint. Stages 6–9 have not run.
-* Method: Two independent reviewers, each launched with `fork_turns: none` and the bundled persona/standard. See [context and source captures](README.md).
+* Method: Two independent reviewers, each launched with `fork_turns: none` and the bundled persona/standard. See [context and source URLs](README.md).
 * Design changes: ZO-1 was explicitly accepted by the author and applied after this review. Original reviewer reports remain unchanged.
 
 ## Result
@@ -14,7 +14,7 @@
 
 **Location:** [Delivery behavior](../../castloop-mvp.md#7-delivery-migration-and-optional-notification), line 548, and the `packages/delivery/src/serve.ts` inventory row at line 620.
 
-The design requires application byte-range parsing and 206/416 generation. The selected Workers Cache instead strips Range before invoking the Worker, requests a complete 200 response and performs range slicing itself. Worker-generated 206 responses are uncacheable. A second range engine may duplicate platform behavior without explaining when it runs. See [Cloudflare cache configuration](https://developers.cloudflare.com/workers/cache/configuration/) and the [saved source](sources/14.txt).
+The design requires application byte-range parsing and 206/416 generation. The selected Workers Cache instead strips Range before invoking the Worker, requests a complete 200 response and performs range slicing itself. Worker-generated 206 responses are uncacheable. A second range engine may duplicate platform behavior without explaining when it runs. See [Cloudflare cache configuration](https://developers.cloudflare.com/workers/cache/configuration/). The downloaded source capture used during review has since been removed.
 
 **Suggested action:** Describe ownership explicitly: cached requests use platform range handling; the origin streams full responses with accurate length and validators. Use the planned deployed integration checks to establish whether a supported bypass path needs application handling. Keep equivalent public HEAD, Range and conditional-response tests on both delivery modes. If platform behavior conflicts with the intended multiple-range or If-Range contract, report that mismatch rather than silently changing the contract.
 
@@ -31,7 +31,7 @@ Complete results: [Zoom-Out reviewer](initial_zoom_out_reviewer.md), [Inventive 
 
 ## Limits and next step
 
-Reviewers read the complete design and supplied context. The Zoom-Out reviewer checked the repository for reusable implementation and found no source implementation. Repeated site navigation and benchmark rows were not exhaustively audited; raw HTML was retained, while readable captures were used for review. No build, deployment or platform experiment was performed. Existing integration/capacity/permission gates remain unperformed.
+Reviewers read the complete design and supplied context. The Zoom-Out reviewer checked the repository for reusable implementation and found no source implementation. Repeated site navigation and benchmark rows were not exhaustively audited; readable captures of the linked sources were used during review and have since been removed. No build, deployment or platform experiment was performed. Existing integration/capacity/permission gates remain unperformed.
 
 Next: Stage 6, Comprehension Test. Its fresh reviewer must read the design alone and return both the feature and implementation paraphrases before findings. Do not supply the concepts brief, prior conversation, external captures or this report as Stage 6 context.
 

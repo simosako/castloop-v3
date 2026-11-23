@@ -6,7 +6,7 @@
 * Status: Review concluded and design finalized by the author on 2026-11-08 after Stage 9 resolutions. No post-edit re-audit or convergence claim.
 * Design edits: Author-approved ZO-1, CR-1 and CR-3 applied; CR-2 contested and left unchanged. Original reviewer reports retained. All seven Stage 9 resolutions applied, including author-revised current/pending URLs and strict Zod schemas. Runtime verification pending.
 
-The author supplied no additional context and approved every external link in the target. The three linked local files and all 15 external pages are included. Raw external pages, readable extracts and capture provenance are retained in `sources/` and `intake.json`. Reviewers use fresh conversation contexts. See the [Stage 5 report](zoom_out_report.md) and its linked complete reviewer results.
+The author supplied no additional context and approved every external link in the target. Reviewers used three local context files and 15 external sources. The downloaded HTML and text extracts have since been removed; the source URLs are listed below and in `intake.json`. Those pages may have changed since the review. Reviewers used fresh conversation contexts. See the [Stage 5 report](zoom_out_report.md) and its linked complete reviewer results.
 
 ## Context
 
@@ -14,23 +14,23 @@ The author supplied no additional context and approved every external link in th
 * `toml_spec.md`
 * `implementation_decisions.md`
 
-## External source captures
+## External sources consulted
 
-* [https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/](https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/) — [readable capture](sources/01.txt), [raw page](sources/01.html).
-* [https://developers.cloudflare.com/durable-objects/api/alarms/](https://developers.cloudflare.com/durable-objects/api/alarms/) — [readable capture](sources/02.txt), [raw page](sources/02.html).
-* [https://developers.cloudflare.com/workers/cache/purge/](https://developers.cloudflare.com/workers/cache/purge/) — [readable capture](sources/03.txt), [raw page](sources/03.html).
-* [https://developers.cloudflare.com/cache/how-to/purge-cache/](https://developers.cloudflare.com/cache/how-to/purge-cache/) — [readable capture](sources/04.txt), [raw page](sources/04.html).
-* [https://developers.cloudflare.com/workers/observability/logs/workers-logs/](https://developers.cloudflare.com/workers/observability/logs/workers-logs/) — [readable capture](sources/05.txt), [raw page](sources/05.html).
-* [https://developers.cloudflare.com/durable-objects/observability/metrics-and-analytics/](https://developers.cloudflare.com/durable-objects/observability/metrics-and-analytics/) — [readable capture](sources/06.txt), [raw page](sources/06.html).
-* [https://github.com/squirrelchat/smol-toml/blob/mistress/README.md](https://github.com/squirrelchat/smol-toml/blob/mistress/README.md) — [readable capture](sources/07.txt), [raw page](sources/07.html).
-* [https://github.com/js-temporal/temporal-polyfill](https://github.com/js-temporal/temporal-polyfill) — [readable capture](sources/08.txt), [raw page](sources/08.html).
-* [https://github.com/inikulin/parse5](https://github.com/inikulin/parse5) — [readable capture](sources/09.txt), [raw page](sources/09.html).
-* [https://github.com/Borewit/music-metadata](https://github.com/Borewit/music-metadata) — [readable capture](sources/10.txt), [raw page](sources/10.html).
-* [https://github.com/mhart/aws4fetch](https://github.com/mhart/aws4fetch) — [readable capture](sources/11.txt), [raw page](sources/11.html).
-* [https://bun.sh/docs/compiler/executables](https://bun.sh/docs/compiler/executables) — [readable capture](sources/12.txt), [raw page](sources/12.html).
-* [https://developers.cloudflare.com/workers/testing/vitest-integration/](https://developers.cloudflare.com/workers/testing/vitest-integration/) — [readable capture](sources/13.txt), [raw page](sources/13.html).
-* [https://developers.cloudflare.com/workers/cache/configuration/](https://developers.cloudflare.com/workers/cache/configuration/) — [readable capture](sources/14.txt), [raw page](sources/14.html).
-* [https://podcasters.apple.com/support/837-change-the-rss-feed-url](https://podcasters.apple.com/support/837-change-the-rss-feed-url) — [readable capture](sources/15.txt), [raw page](sources/15.html).
+* [Cloudflare Durable Objects SQLite storage](https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/)
+* [Cloudflare Durable Objects alarms](https://developers.cloudflare.com/durable-objects/api/alarms/)
+* [Cloudflare Workers Cache purge](https://developers.cloudflare.com/workers/cache/purge/)
+* [Cloudflare cache purge](https://developers.cloudflare.com/cache/how-to/purge-cache/)
+* [Cloudflare Workers Logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/)
+* [Cloudflare Durable Objects metrics and analytics](https://developers.cloudflare.com/durable-objects/observability/metrics-and-analytics/)
+* [smol-toml README](https://github.com/squirrelchat/smol-toml/blob/mistress/README.md)
+* [Temporal polyfill](https://github.com/js-temporal/temporal-polyfill)
+* [parse5](https://github.com/inikulin/parse5)
+* [music-metadata](https://github.com/Borewit/music-metadata)
+* [aws4fetch](https://github.com/mhart/aws4fetch)
+* [Bun executable documentation](https://bun.sh/docs/compiler/executables)
+* [Cloudflare Workers Vitest integration](https://developers.cloudflare.com/workers/testing/vitest-integration/)
+* [Cloudflare Workers Cache configuration](https://developers.cloudflare.com/workers/cache/configuration/)
+* [Apple Podcasts RSS feed URL changes](https://podcasters.apple.com/support/837-change-the-rss-feed-url)
 
 ## Stage 6 isolation
 

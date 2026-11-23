@@ -29,6 +29,10 @@ Use `castloop pull` to retrieve current metadata without downloading audio, and 
 - [Verification](docs/verification.md) — tests performed and remaining limitations.
 - [MVP design](docs/designs/castloop-mvp.md) — architecture and design decisions.
 
+## License
+
+Castloop is licensed under the [MIT License](LICENSE).
+
 ## Development
 
 Install [Bun](https://bun.sh/) and run:
