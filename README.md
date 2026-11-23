@@ -43,3 +43,5 @@ bun run typecheck
 ```
 
 The compiled CLI is `dist/castloop`. Cross-compiled release targets require testing on their native platforms before they can be claimed as supported.
+
+Pushing a tag named `v*` (for example, `v1.0.0`) runs native builds for Linux x86-64, Windows x86-64 and macOS arm64. After all three binaries pass their version smoke checks, GitHub Actions creates a release containing the binaries and `SHA256SUMS`.

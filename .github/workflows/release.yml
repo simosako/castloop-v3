@@ -1,0 +1,85 @@
+name: Release CLI
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x86-64
+            runner: ubuntu-latest
+            target: bun-linux-x64
+            asset: castloop-linux-x64
+          - platform: windows-x86-64
+            runner: windows-latest
+            target: bun-windows-x64
+            asset: castloop-windows-x64.exe
+          - platform: macos-arm64
+            runner: macos-15
+            target: bun-darwin-arm64
+            asset: castloop-darwin-arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build standalone CLI
+        run: bun run build:release --target ${{ matrix.target }}
+
+      - name: Smoke test binary (Linux and macOS)
+        if: runner.os != 'Windows'
+        run: ./dist/release/${{ matrix.asset }} --version
+
+      - name: Smoke test binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\dist\release\${{ matrix.asset }} --version
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          path: dist/release/${{ matrix.asset }}
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist/release
+          merge-multiple: true
+
+      - name: Generate checksums
+        working-directory: dist/release
+        run: sha256sum castloop-* > SHA256SUMS
+
+      - name: Create release and upload binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "${GITHUB_REF_NAME}"
+          dist/release/castloop-*
+          dist/release/SHA256SUMS
+          --verify-tag
+          --generate-notes
